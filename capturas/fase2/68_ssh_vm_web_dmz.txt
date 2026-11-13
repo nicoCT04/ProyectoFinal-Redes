@@ -1,0 +1,10 @@
+# vm-web-dmz creada en el portal; verificacion por SSH saltando por vm-ti-01
+$ ssh -i farmaruta-key.pem -J azureuser@158.23.161.215 azureuser@10.10.0.148
+== vm-web-dmz
+eth0             UP             10.10.0.148/28 metric 100
+Link 2 (eth0): 168.63.129.16        # DNS de Azure puesto en la NIC
+$ curl -sI https://www.google.com | head -1
+HTTP/2 200                          # la DMZ sale a internet
+
+# NIC vm-web-dmz77 (az network nic show)
+ip: 10.10.0.148   asignacion: Static   dns: 168.63.129.16   nsg_nic: null   ip_publica: pip-web-dmz
