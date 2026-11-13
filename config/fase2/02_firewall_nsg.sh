@@ -40,7 +40,7 @@ regla nsg-visitas Deny-Redes-Internas  4000 Outbound Deny  '*' '*' VirtualNetwor
 
 echo ">> TI: nadie inicia conexiones hacia TI (salvo SSH de administracion desde internet)"
 if [ -n "$ADMIN_IPS" ]; then
-  regla nsg-ti Allow-SSH-Admin           90 Inbound  Allow Tcp "$ADMIN_IPS" "$IP_TI_01" 22 \
+  regla nsg-ti Allow-SSH-Admin          105 Inbound  Allow Tcp "$ADMIN_IPS" "$IP_TI_01" 22 \
     "SSH al jump host de TI solo desde las IPs de los administradores"
 else
   echo "   (ADMIN_IPS vacio: no se crea Allow-SSH-Admin; nadie entra por SSH desde internet)"

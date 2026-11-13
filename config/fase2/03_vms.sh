@@ -10,9 +10,9 @@
 #   vm-ventas-01   10.10.0.68   Ventas       Cliente de prueba
 #   vm-visitas-01  10.10.0.4    Visitas      Cliente de prueba
 #
-# Todas: Ubuntu 22.04, misma llave SSH (farmaruta-key), disco Standard SSD,
-# sin NSG en la NIC (el filtrado lo hace el NSG de la subred) y auto-apagado
-# diario a las 23:00 de Guatemala.
+# Todas: Ubuntu 24.04, misma llave SSH (farmaruta-key), disco Standard SSD,
+# sin NSG en la NIC (el filtrado lo hace el NSG de la subred). Mexico Central
+# no soporta auto-apagado: hay que apagarlas a mano al terminar.
 #
 # Uso:  bash 03_vms.sh                 crea todas
 #       bash 03_vms.sh dns intranet    crea solo esas (si no alcanza la cuota)
@@ -42,7 +42,9 @@ vm() {
     --nsg "" --admin-username "$ADMIN" --ssh-key-name "$SSH_KEY_NAME" \
     --storage-sku "$DISK_SKU" --os-disk-delete-option Delete --nic-delete-option Delete \
     "$@" --query "{VM:name, IP_privada:privateIpAddress, IP_publica:publicIpAddress, Zona:zones}" -o table
-  az vm auto-shutdown -g "$RG" -n "$nombre" --time "$AUTO_SHUTDOWN_UTC" -o none
+  # Mexico Central no soporta auto-shutdown; se intenta por si se cambia de region
+  az vm auto-shutdown -g "$RG" -n "$nombre" --time "$AUTO_SHUTDOWN_UTC" -o none 2>/dev/null \
+    || echo "   (auto-shutdown no disponible en $LOC: apagar las VMs a mano)"
 }
 
 # Visitas y DMZ no pueden llegar al DNS interno (lo bloquean los NSG), asi que

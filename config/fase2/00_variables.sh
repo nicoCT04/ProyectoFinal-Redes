@@ -13,11 +13,11 @@ LOC="mexicocentral"
 VNET="vnet-farmaruta"
 SIZE="Standard_B2ats_v2"     # Si falla por capacidad, probar otra zona o tamano
 ZONE="2"                     # En la Fase 1 la zona 1 se quedo sin capacidad
-IMAGE="Ubuntu2204"
+IMAGE="Ubuntu2404"           # Imagen oficial de Canonical (gratuita)
 ADMIN="azureuser"
 SSH_KEY_NAME="farmaruta-key"   # Una sola llave SSH para todas las VMs
 DISK_SKU="StandardSSD_LRS"     # Mas barato que Premium y suficiente
-AUTO_SHUTDOWN_UTC="0500"       # 23:00 hora de Guatemala (UTC-6)
+AUTO_SHUTDOWN_UTC="0500"       # 23:00 GT. Mexico Central NO soporta auto-shutdown: apagar a mano
 
 # IPs publicas desde las que se permite SSH a vm-ti-01 (jump host de TI).
 # Ej: ADMIN_IPS="190.56.10.20 181.174.5.7"  (vacio = no se crea la regla)

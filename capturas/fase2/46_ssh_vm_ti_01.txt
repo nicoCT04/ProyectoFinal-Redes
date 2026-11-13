@@ -1,0 +1,17 @@
+$ ssh -i ~/.ssh/farmaruta-key.pem azureuser@158.23.161.215
+== Conectado a: vm-ti-01
+== IPs:
+lo               UNKNOWN        127.0.0.1/8
+eth0             UP             10.10.0.100/27 metric 100
+== Ruta por defecto:
+default via 10.10.0.97 dev eth0 proto dhcp src 10.10.0.100 metric 100
+10.10.0.96/27 dev eth0 proto kernel scope link src 10.10.0.100 metric 100
+== DNS:
+       DNS Servers: 168.63.129.16
+== Internet:
+HTTP/2 200
+== Puertos escuchando (sudo ss -tlnp):
+LISTEN 127.0.0.53%lo:53   systemd-resolve
+LISTEN 0.0.0.0:22         sshd
+LISTEN 127.0.0.54:53      systemd-resolve
+LISTEN [::]:22            sshd
