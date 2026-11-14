@@ -1,0 +1,27 @@
+; =====================================================================
+; FarmaRuta - Fase 2: zona directa farmaruta.local
+; /etc/bind/db.farmaruta.local
+; Aumentar el serial (AAAAMMDDnn) en cada cambio.
+; =====================================================================
+$TTL    3600
+@       IN      SOA     ns1.farmaruta.local. admin.farmaruta.local. (
+                        2026111401      ; Serial
+                        3600            ; Refresh: cada cuanto un secundario revisa el serial
+                        900             ; Retry:   si el refresh falla
+                        604800          ; Expire:  el secundario deja de responder tras 1 semana sin contacto
+                        300 )           ; TTL negativo: cuanto se recuerda un NXDOMAIN
+
+; Servidor de nombres de la zona
+@       IN      NS      ns1.farmaruta.local.
+
+; Servidores (Data Center 10.10.0.128/28)
+ns1         IN  A       10.10.0.132
+dns         IN  A       10.10.0.132
+rrhh        IN  A       10.10.0.133
+
+; Estaciones
+ti01        IN  A       10.10.0.100
+ventas01    IN  A       10.10.0.68
+
+; Alias
+intranet    IN  CNAME   rrhh
