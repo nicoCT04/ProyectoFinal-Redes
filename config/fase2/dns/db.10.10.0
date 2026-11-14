@@ -1,0 +1,19 @@
+; =====================================================================
+; FarmaRuta - Fase 2: zona inversa 0.10.10.in-addr.arpa (10.10.0.0/24)
+; /etc/bind/db.10.10.0
+; Cada PTR usa solo el ultimo octeto: "132" = 132.0.10.10.in-addr.arpa
+; =====================================================================
+$TTL    3600
+@       IN      SOA     ns1.farmaruta.local. admin.farmaruta.local. (
+                        2026111401      ; Serial
+                        3600            ; Refresh
+                        900             ; Retry
+                        604800          ; Expire
+                        300 )           ; TTL negativo
+
+@       IN      NS      ns1.farmaruta.local.
+
+132     IN      PTR     ns1.farmaruta.local.
+133     IN      PTR     rrhh.farmaruta.local.
+100     IN      PTR     ti01.farmaruta.local.
+68      IN      PTR     ventas01.farmaruta.local.
