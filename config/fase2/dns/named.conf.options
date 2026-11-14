@@ -1,0 +1,39 @@
+// =====================================================================
+// FarmaRuta - Fase 2: DNS interno (BIND9) en vm-dns 10.10.0.132
+// /etc/bind/named.conf.options  -> opciones globales del servidor
+// =====================================================================
+
+// Redes internas que pueden usar este DNS. Visitas (10.10.0.0/26) y la
+// DMZ (10.10.0.144/28) quedan fuera a proposito: ademas de que el NSG ya
+// las bloquea, BIND tambien las rechazaria (defensa en profundidad).
+acl internas {
+    10.10.0.64/27;    // Ventas
+    10.10.0.96/27;    // TI
+    10.10.0.128/28;   // Data Center (incluye la intranet y este servidor)
+    127.0.0.1;        // el propio servidor
+};
+
+options {
+    directory "/var/cache/bind";
+
+    // Solo escucha en su IP privada y en loopback, no en todas las interfaces.
+    listen-on { 10.10.0.132; 127.0.0.1; };
+    listen-on-v6 { none; };            // la VNet no usa IPv6
+
+    // Quien puede preguntar y quien puede pedir resolucion recursiva.
+    // Limitar la recursion evita ser un "open resolver" (ataques de amplificacion).
+    allow-query     { internas; };
+    allow-recursion { internas; };
+
+    // No hay servidores secundarios: nadie puede copiar la zona completa (AXFR).
+    allow-transfer  { none; };
+
+    // Lo que no es farmaruta.local se le pregunta al DNS de la plataforma Azure.
+    forwarders { 168.63.129.16; };
+    forward only;
+
+    dnssec-validation auto;
+
+    // No revelar la version de BIND a quien consulte "version.bind".
+    version "no disponible";
+};

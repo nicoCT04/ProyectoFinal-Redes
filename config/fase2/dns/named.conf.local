@@ -1,0 +1,17 @@
+// =====================================================================
+// FarmaRuta - Fase 2: DNS interno (BIND9)
+// /etc/bind/named.conf.local  -> zonas de las que este servidor es autoritativo
+// =====================================================================
+
+// Zona directa: nombre -> IP
+zone "farmaruta.local" {
+    type master;
+    file "/etc/bind/db.farmaruta.local";
+};
+
+// Zona inversa de 10.10.0.0/24: IP -> nombre (registros PTR).
+// Los octetos van al reves: 10.10.0.x -> x.0.10.10.in-addr.arpa
+zone "0.10.10.in-addr.arpa" {
+    type master;
+    file "/etc/bind/db.10.10.0";
+};
