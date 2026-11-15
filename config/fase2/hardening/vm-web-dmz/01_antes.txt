@@ -1,0 +1,47 @@
+azureuser@vm-web-dmz:~$ sudo ss -tulpn
+Netid State  Recv-Q Send-Q    Local Address:Port Peer Address:PortProcess                                                                         
+udp   UNCONN 0      0            127.0.0.54:53        0.0.0.0:*    users:(("systemd-resolve",pid=8696,fd=16))                                     
+udp   UNCONN 0      0         127.0.0.53%lo:53        0.0.0.0:*    users:(("systemd-resolve",pid=8696,fd=14))                                     
+udp   UNCONN 0      0      10.10.0.148%eth0:68        0.0.0.0:*    users:(("systemd-network",pid=8746,fd=22))                                     
+udp   UNCONN 0      0             127.0.0.1:323       0.0.0.0:*    users:(("chronyd",pid=7927,fd=6))                                              
+udp   UNCONN 0      0                 [::1]:323          [::]:*    users:(("chronyd",pid=7927,fd=7))                                              
+tcp   LISTEN 0      511             0.0.0.0:80        0.0.0.0:*    users:(("nginx",pid=8705,fd=7),("nginx",pid=8704,fd=7),("nginx",pid=8703,fd=7))
+tcp   LISTEN 0      4096         127.0.0.54:53        0.0.0.0:*    users:(("systemd-resolve",pid=8696,fd=17))                                     
+tcp   LISTEN 0      4096      127.0.0.53%lo:53        0.0.0.0:*    users:(("systemd-resolve",pid=8696,fd=15))                                     
+tcp   LISTEN 0      4096            0.0.0.0:22        0.0.0.0:*    users:(("sshd",pid=8715,fd=3),("systemd",pid=1,fd=164))                        
+tcp   LISTEN 0      511             0.0.0.0:443       0.0.0.0:*    users:(("nginx",pid=8705,fd=6),("nginx",pid=8704,fd=6),("nginx",pid=8703,fd=6))
+tcp   LISTEN 0      511                [::]:80           [::]:*    users:(("nginx",pid=8705,fd=8),("nginx",pid=8704,fd=8),("nginx",pid=8703,fd=8))
+tcp   LISTEN 0      4096               [::]:22           [::]:*    users:(("sshd",pid=8715,fd=4),("systemd",pid=1,fd=165))                        
+tcp   LISTEN 0      511                [::]:443          [::]:*    users:(("nginx",pid=8705,fd=5),("nginx",pid=8704,fd=5),("nginx",pid=8703,fd=5))
+azureuser@vm-web-dmz:~$ sudo ufw status verbose
+Status: inactive
+azureuser@vm-web-dmz:~$ sudo sshd -T | grep -E '^(permitrootlogin|passwordauthentication|kbdinteractiveauthentication|x11forwarding|allowtcpforwarding|maxauthtries) '
+maxauthtries 6
+permitrootlogin without-password
+passwordauthentication no
+kbdinteractiveauthentication no
+x11forwarding yes
+allowtcpforwarding yes
+azureuser@vm-web-dmz:~$ systemctl list-units --type=service --state=running --no-pager --no-legend | awk '{print $1}'
+chrony.service
+cron.service
+dbus.service
+getty@tty1.service
+hv-kvp-daemon.service
+ModemManager.service
+multipathd.service
+networkd-dispatcher.service
+nginx.service
+polkit.service
+rsyslog.service
+serial-getty@ttyS0.service
+ssh.service
+systemd-journald.service
+systemd-logind.service
+systemd-networkd.service
+systemd-resolved.service
+systemd-udevd.service
+udisks2.service
+unattended-upgrades.service
+user@1000.service
+walinuxagent.service

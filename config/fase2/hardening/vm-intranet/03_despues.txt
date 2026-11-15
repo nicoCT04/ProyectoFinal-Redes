@@ -1,0 +1,49 @@
+azureuser@vm-intranet:~$ sudo ss -tulpn
+Netid State  Recv-Q Send-Q    Local Address:Port Peer Address:PortProcess                                                                      
+udp   UNCONN 0      0            127.0.0.54:53        0.0.0.0:*    users:(("systemd-resolve",pid=518,fd=16))                                   
+udp   UNCONN 0      0         127.0.0.53%lo:53        0.0.0.0:*    users:(("systemd-resolve",pid=518,fd=14))                                   
+udp   UNCONN 0      0      10.10.0.133%eth0:68        0.0.0.0:*    users:(("systemd-network",pid=618,fd=21))                                   
+udp   UNCONN 0      0             127.0.0.1:323       0.0.0.0:*    users:(("chronyd",pid=726,fd=6))                                            
+udp   UNCONN 0      0                 [::1]:323          [::]:*    users:(("chronyd",pid=726,fd=7))                                            
+tcp   LISTEN 0      511         10.10.0.133:80        0.0.0.0:*    users:(("nginx",pid=756,fd=7),("nginx",pid=755,fd=7),("nginx",pid=754,fd=7))
+tcp   LISTEN 0      4096      127.0.0.53%lo:53        0.0.0.0:*    users:(("systemd-resolve",pid=518,fd=15))                                   
+tcp   LISTEN 0      4096            0.0.0.0:22        0.0.0.0:*    users:(("sshd",pid=1860,fd=3),("systemd",pid=1,fd=66))                      
+tcp   LISTEN 0      4096         127.0.0.54:53        0.0.0.0:*    users:(("systemd-resolve",pid=518,fd=17))                                   
+tcp   LISTEN 0      4096               [::]:22           [::]:*    users:(("sshd",pid=1860,fd=4),("systemd",pid=1,fd=67))                      
+azureuser@vm-intranet:~$ sudo ufw status numbered
+Status: active
+
+     To                         Action      From
+     --                         ------      ----
+[ 1] 22/tcp                     ALLOW IN    10.10.0.96/27              # SSH solo desde TI
+[ 2] 80/tcp                     ALLOW IN    10.10.0.64/27              # Intranet RRHH
+[ 3] 80/tcp                     ALLOW IN    10.10.0.96/27              # Intranet RRHH
+[ 4] 80/tcp                     ALLOW IN    10.10.0.128/28             # Intranet RRHH
+
+azureuser@vm-intranet:~$ sudo sshd -T | grep -E '^(permitrootlogin|passwordauthentication|kbdinteractiveauthentication|x11forwarding|allowtcpforwarding|maxauthtries) '
+maxauthtries 3
+permitrootlogin no
+passwordauthentication no
+kbdinteractiveauthentication no
+x11forwarding no
+allowtcpforwarding no
+azureuser@vm-intranet:~$ systemctl list-units --type=service --state=running --no-pager --no-legend | awk '{print $1}'
+chrony.service
+cron.service
+dbus.service
+getty@tty1.service
+hv-kvp-daemon.service
+networkd-dispatcher.service
+nginx.service
+polkit.service
+rsyslog.service
+serial-getty@ttyS0.service
+ssh.service
+systemd-journald.service
+systemd-logind.service
+systemd-networkd.service
+systemd-resolved.service
+systemd-udevd.service
+unattended-upgrades.service
+user@1000.service
+walinuxagent.service

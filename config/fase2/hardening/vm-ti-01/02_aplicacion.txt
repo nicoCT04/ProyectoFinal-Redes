@@ -1,0 +1,35 @@
+azureuser@vm-ti-01:~$ sudo bash /tmp/hardening.sh ti
+>> ufw (ti)
+Default incoming policy changed to 'deny'
+(be sure to update your rules accordingly)
+Default outgoing policy changed to 'allow'
+(be sure to update your rules accordingly)
+Logging enabled
+Rules updated
+Rules updated (v6)
+Firewall is active and enabled on system startup
+Status: active
+
+     To                         Action      From
+     --                         ------      ----
+[ 1] 22/tcp                     ALLOW IN    Anywhere                   # SSH admin (filtrado por NSG Allow-SSH-Admin)
+[ 2] 22/tcp (v6)                ALLOW IN    Anywhere (v6)              # SSH admin (filtrado por NSG Allow-SSH-Admin)
+
+>> sshd
+logingracetime 30
+maxauthtries 3
+permitrootlogin no
+passwordauthentication no
+kbdinteractiveauthentication no
+x11forwarding no
+allowtcpforwarding yes
+allowagentforwarding no
+allowusers azureuser
+>> servicios
+   deshabilitado: ModemManager
+   deshabilitado: udisks2
+   deshabilitado: fwupd
+   deshabilitado: fwupd-refresh.timer
+   deshabilitado: multipathd
+   deshabilitado: multipathd.socket
+>> Listo: vm-ti-01 [ti]

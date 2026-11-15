@@ -1,0 +1,42 @@
+azureuser@vm-visitas-01:~$ sudo ss -tulpn
+Netid State  Recv-Q Send-Q  Local Address:Port Peer Address:PortProcess                                                 
+udp   UNCONN 0      0           127.0.0.1:323       0.0.0.0:*    users:(("chronyd",pid=994,fd=6))                       
+udp   UNCONN 0      0          127.0.0.54:53        0.0.0.0:*    users:(("systemd-resolve",pid=472,fd=16))              
+udp   UNCONN 0      0       127.0.0.53%lo:53        0.0.0.0:*    users:(("systemd-resolve",pid=472,fd=14))              
+udp   UNCONN 0      0      10.10.0.4%eth0:68        0.0.0.0:*    users:(("systemd-network",pid=664,fd=21))              
+udp   UNCONN 0      0               [::1]:323          [::]:*    users:(("chronyd",pid=994,fd=7))                       
+tcp   LISTEN 0      4096    127.0.0.53%lo:53        0.0.0.0:*    users:(("systemd-resolve",pid=472,fd=15))              
+tcp   LISTEN 0      4096          0.0.0.0:22        0.0.0.0:*    users:(("sshd",pid=1402,fd=3),("systemd",pid=1,fd=176))
+tcp   LISTEN 0      4096       127.0.0.54:53        0.0.0.0:*    users:(("systemd-resolve",pid=472,fd=17))              
+tcp   LISTEN 0      4096             [::]:22           [::]:*    users:(("sshd",pid=1402,fd=4),("systemd",pid=1,fd=192))
+azureuser@vm-visitas-01:~$ sudo ufw status verbose
+Status: inactive
+azureuser@vm-visitas-01:~$ sudo sshd -T | grep -E '^(permitrootlogin|passwordauthentication|kbdinteractiveauthentication|x11forwarding|allowtcpforwarding|maxauthtries) '
+maxauthtries 6
+permitrootlogin without-password
+passwordauthentication no
+kbdinteractiveauthentication no
+x11forwarding yes
+allowtcpforwarding yes
+azureuser@vm-visitas-01:~$ systemctl list-units --type=service --state=running --no-pager --no-legend | awk '{print $1}'
+chrony.service
+cron.service
+dbus.service
+getty@tty1.service
+hv-kvp-daemon.service
+ModemManager.service
+multipathd.service
+networkd-dispatcher.service
+polkit.service
+rsyslog.service
+serial-getty@ttyS0.service
+ssh.service
+systemd-journald.service
+systemd-logind.service
+systemd-networkd.service
+systemd-resolved.service
+systemd-udevd.service
+udisks2.service
+unattended-upgrades.service
+user@1000.service
+walinuxagent.service
