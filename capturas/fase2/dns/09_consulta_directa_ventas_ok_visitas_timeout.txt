@@ -1,0 +1,21 @@
+== Evidencia: consulta directa al DNS interno desde vm-ventas-01 (10.10.0.68) - 2026-11-15 19:02:58 UTC
+
+azureuser@vm-ventas-01:~$ resolvectl dns eth0
+Link 2 (eth0): 168.63.129.16
+
+azureuser@vm-ventas-01:~$ nslookup -timeout=3 -retry=1 rrhh.farmaruta.local 10.10.0.132
+Server:		10.10.0.132
+Address:	10.10.0.132#53
+
+Name:	rrhh.farmaruta.local
+Address: 10.10.0.133
+
+== Evidencia: consulta directa al DNS interno desde vm-visitas-01 (10.10.0.4) - 2026-11-15 19:03:10 UTC
+
+azureuser@vm-visitas-01:~$ resolvectl dns eth0
+Link 2 (eth0): 168.63.129.16
+
+azureuser@vm-visitas-01:~$ nslookup -timeout=3 -retry=1 rrhh.farmaruta.local 10.10.0.132
+;; communications error to 10.10.0.132#53: timed out
+;; no servers could be reached
+

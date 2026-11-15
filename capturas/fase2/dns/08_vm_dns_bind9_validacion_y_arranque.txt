@@ -1,0 +1,46 @@
+== Evidencia: BIND9 en vm-dns (10.10.0.132) - 2026-11-15 19:02:01 UTC
+
+azureuser@vm-dns:~$ named -v
+BIND 9.18.39-0ubuntu0.24.04.9-Ubuntu (Extended Support Version) <id:>
+
+azureuser@vm-dns:~$ sudo named-checkconf && echo named-checkconf: sin errores
+named-checkconf: sin errores
+
+azureuser@vm-dns:~$ sudo named-checkzone farmaruta.local /etc/bind/db.farmaruta.local
+zone farmaruta.local/IN: loaded serial 2026111401
+OK
+
+azureuser@vm-dns:~$ sudo named-checkzone 0.10.10.in-addr.arpa /etc/bind/db.10.10.0
+zone 0.10.10.in-addr.arpa/IN: loaded serial 2026111401
+OK
+
+azureuser@vm-dns:~$ systemctl status named --no-pager | head -6
+● named.service - BIND Domain Name Server
+     Loaded: loaded (/usr/lib/systemd/system/named.service; enabled; preset: enabled)
+     Active: active (running) since Sun 2026-11-15 19:01:29 UTC; 32s ago
+       Docs: man:named(8)
+   Main PID: 3007 (named)
+     Status: "running"
+
+azureuser@vm-dns:~$ sudo ss -tulnp | grep named
+udp   UNCONN 0      0           10.10.0.132:53        0.0.0.0:*    users:(("named",pid=3007,fd=21))                       
+udp   UNCONN 0      0             127.0.0.1:53        0.0.0.0:*    users:(("named",pid=3007,fd=18))                       
+tcp   LISTEN 0      10          10.10.0.132:53        0.0.0.0:*    users:(("named",pid=3007,fd=22))                       
+tcp   LISTEN 0      5             127.0.0.1:953       0.0.0.0:*    users:(("named",pid=3007,fd=23))                       
+tcp   LISTEN 0      10            127.0.0.1:53        0.0.0.0:*    users:(("named",pid=3007,fd=19))                       
+tcp   LISTEN 0      5                 [::1]:953          [::]:*    users:(("named",pid=3007,fd=24))                       
+
+azureuser@vm-dns:~$ dig @127.0.0.1 rrhh.farmaruta.local +noall +answer
+rrhh.farmaruta.local.	3600	IN	A	10.10.0.133
+
+azureuser@vm-dns:~$ dig @127.0.0.1 intranet.farmaruta.local +noall +answer
+intranet.farmaruta.local. 3600	IN	CNAME	rrhh.farmaruta.local.
+rrhh.farmaruta.local.	3600	IN	A	10.10.0.133
+
+azureuser@vm-dns:~$ dig @127.0.0.1 -x 10.10.0.133 +noall +answer
+133.0.10.10.in-addr.arpa. 3600	IN	PTR	rrhh.farmaruta.local.
+
+azureuser@vm-dns:~$ dig @10.10.0.132 google.com +noall +answer +stats | head -3
+google.com.		81	IN	A	192.178.52.174
+;; Query time: 0 msec
+;; SERVER: 10.10.0.132#53(10.10.0.132) (UDP)
