@@ -8,9 +8,9 @@ set -euo pipefail
 cd "$(dirname "$0")"
 source 00_variables.sh
 
-echo ">> 0. Cuota de vCPUs en $LOC (cada $SIZE usa 2 vCPU, la Fase 2 usa 6 VMs)"
+echo ">> 0. Cuota de vCPUs en $LOC (4 x $SIZE_SRV + 2 x $SIZE = 6 vCPU + 2 Spot; las VMs apagadas tambien cuentan)"
 az vm list-usage -l "$LOC" \
-  --query "[?contains(name.value, 'cores') || contains(name.value, 'Cores')].{Recurso:localName, Uso:currentValue, Limite:limit}" \
+  --query "[?contains(name.value, 'cores') || contains(name.value, 'Cores') || name.value=='standardBSFamily'].{Recurso:localName, Uso:currentValue, Limite:limit}" \
   -o table
 
 echo ">> 1. Resource group"

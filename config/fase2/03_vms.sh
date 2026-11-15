@@ -11,8 +11,10 @@
 #   vm-visitas-01  10.10.0.4    Visitas      Cliente de prueba
 #
 # Todas: Ubuntu 24.04, misma llave SSH (farmaruta-key), disco Standard SSD,
-# sin NSG en la NIC (el filtrado lo hace el NSG de la subred). Mexico Central
-# no soporta auto-apagado: hay que apagarlas a mano al terminar.
+# sin NSG en la NIC (el filtrado lo hace el NSG de la subred). Por la cuota de
+# 6 vCPU los servidores van en $SIZE_SRV (1 vCPU) y los clientes en $SIZE;
+# vm-ventas-01 es Spot (usa la cuota Low-priority). Ver 00_variables.sh.
+# Mexico Central no soporta auto-apagado: hay que apagarlas a mano al terminar.
 #
 # Uso:  bash 03_vms.sh                 crea todas
 #       bash 03_vms.sh dns intranet    crea solo esas (si no alcanza la cuota)
@@ -30,14 +32,16 @@ if ! az sshkey show -g "$RG" -n "$SSH_KEY_NAME" -o none 2>/dev/null; then
 fi
 
 # vm <nombre> <subred> <ip> [args extra de az vm create]
+# VM_SIZE y VM_ZONE cambian el tamano y la zona de una VM en particular
 vm() {
   local nombre="$1" subred="$2" ip="$3"; shift 3
+  local size="${VM_SIZE:-$SIZE_SRV}" zone="${VM_ZONE:-$ZONE}"
   if az vm show -g "$RG" -n "$nombre" -o none 2>/dev/null; then
     echo "   $nombre ya existe, se omite"; return
   fi
   echo ">> Creando $nombre ($ip en $subred)"
   az vm create -g "$RG" -n "$nombre" -l "$LOC" \
-    --image "$IMAGE" --size "$SIZE" --zone "$ZONE" \
+    --image "$IMAGE" --size "$size" --zone "$zone" \
     --vnet-name "$VNET" --subnet "$subred" --private-ip-address "$ip" \
     --nsg "" --admin-username "$ADMIN" --ssh-key-name "$SSH_KEY_NAME" \
     --storage-sku "$DISK_SKU" --os-disk-delete-option Delete --nic-delete-option Delete \
@@ -64,8 +68,9 @@ crear() {
     ti)       vm vm-ti-01      snet-ti         "$IP_TI_01" \
                 --public-ip-address pip-ti-01 --public-ip-sku Standard \
                 --public-ip-address-allocation static ;;
-    ventas)   vm vm-ventas-01  snet-ventas     "$IP_VENTAS_01"  --public-ip-address "" ;;
-    visitas)  vm vm-visitas-01 snet-visitas    "$IP_VISITAS_01" --public-ip-address ""
+    ventas)   VM_SIZE="$SIZE" vm vm-ventas-01 snet-ventas "$IP_VENTAS_01" --public-ip-address "" \
+                --priority Spot --max-price -1 --eviction-policy Deallocate ;;
+    visitas)  VM_SIZE="$SIZE" VM_ZONE="$ZONE_ALT" vm vm-visitas-01 snet-visitas "$IP_VISITAS_01" --public-ip-address ""
               usar_dns_azure vm-visitas-01 ;;
     *) echo "Rol desconocido: $1 (usar: dns intranet web ti ventas visitas)"; exit 1 ;;
   esac

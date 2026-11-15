@@ -11,8 +11,16 @@
 RG="rg-farmaruta"
 LOC="mexicocentral"
 VNET="vnet-farmaruta"
-SIZE="Standard_B2ats_v2"     # Si falla por capacidad, probar otra zona o tamano
+# Azure for Students: 6 vCPU por region, y las VMs apagadas (deallocated) TAMBIEN
+# cuentan. Con 6 VMs de 2 vCPU no alcanza, asi que los servidores van en B1s
+# (1 vCPU, 1 GiB; familia BS, limite 4 vCPU) y los clientes de prueba en B2ats_v2.
+#   ti, dns, intranet, web  B1s       4 vCPU  (BS 4/4)
+#   ventas                  B2ats_v2  Spot: cuota aparte "Low-priority" (2/3)
+#   visitas                 B2ats_v2  2 vCPU  -> total regional 6/6
+SIZE_SRV="Standard_B1s"      # Servidores y jump host
+SIZE="Standard_B2ats_v2"     # Clientes de prueba. Si falla por capacidad, probar otra zona
 ZONE="2"                     # En la Fase 1 la zona 1 se quedo sin capacidad
+ZONE_ALT="3"                 # B2ats_v2 se quedo sin capacidad en la zona 2 (vm-visitas-01)
 IMAGE="Ubuntu2404"           # Imagen oficial de Canonical (gratuita)
 ADMIN="azureuser"
 SSH_KEY_NAME="farmaruta-key"   # Una sola llave SSH para todas las VMs
