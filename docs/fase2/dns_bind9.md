@@ -4,12 +4,14 @@
 
 ## Qué se implementó
 
-Un servidor DNS interno en `vm-dns` (10.10.0.132, subred Data Center 10.10.0.128/28, sin IP pública) con **BIND9** (Berkeley Internet Name Domain), el servidor DNS más usado en Linux. El servidor cumple dos papeles:
+Un servidor DNS interno en `vm-dns` (10.10.0.132 estática, subred Data Center 10.10.0.128/28, sin IP pública, Ubuntu 24.04, `Standard_B1s`) con **BIND9** (Berkeley Internet Name Domain), el servidor DNS más usado en Linux. El servidor cumple dos papeles:
 
 - **Autoritativo** para la zona privada `farmaruta.local` y para su zona inversa `0.10.10.in-addr.arpa`: él es la fuente oficial de esos nombres.
 - **Recursivo con forwarder** para todo lo demás (google.com, ubuntu.com…): no resuelve desde la raíz, sino que reenvía la consulta al DNS de la plataforma Azure (168.63.129.16).
 
 Las VMs internas lo usan sin configurar nada a mano: la VNet `vnet-farmaruta` anuncia `10.10.0.132` como servidor DNS por el **DHCP de Azure**. Visitas y DMZ tienen 168.63.129.16 fijo en su NIC, porque el firewall no las deja llegar al DNS interno.
+
+La VM se creó en el portal con tamaño `Standard_B1s` (1 vCPU, 1 GiB) en vez de `Standard_B2ats_v2`: la suscripción Azure for Students tiene un límite de 6 vCPUs por región y ya quedaba solo 1 libre. A BIND9 le sobra con eso. No tiene IP pública ni NSG en la NIC: el filtrado lo hace `nsg-datacenter` a nivel de subred, y se administra por SSH saltando por `vm-ti-01`.
 
 ## Archivos de configuración (`config/fase2/dns/`)
 
