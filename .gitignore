@@ -1,0 +1,4 @@
+# Llaves privadas SSH: nunca al repo
+*.pem
+*.key
+.vscode/
