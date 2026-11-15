@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FarmaRuta · Recursos Humanos</title>
+  <!-- Pagina estatica: todo el estilo va aqui adentro, sin recursos externos,
+       porque la intranet no depende de internet. -->
+  <style>
+    body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #f4f7f6; color: #1f2d2a; }
+    header { background: #0b7a5a; color: #fff; padding: 20px 24px; }
+    header h1 { margin: 0; font-size: 1.6em; }
+    header p { margin: 4px 0 0; opacity: .85; }
+    nav { background: #095f46; padding: 8px 24px; }
+    nav a { color: #fff; margin-right: 18px; text-decoration: none; font-weight: bold; }
+    main { max-width: 900px; margin: 24px auto; padding: 0 16px; }
+    section { background: #fff; border-radius: 8px; padding: 16px 20px; margin-bottom: 18px;
+              box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    h2 { color: #0b7a5a; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #e3e9e7; }
+    .aviso { border-left: 4px solid #e8a33d; padding-left: 10px; margin: 10px 0; }
+    footer { text-align: center; font-size: .85em; color: #6b7c77; padding: 16px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>FarmaRuta · Recursos Humanos</h1>
+    <p>Intranet interna — solo accesible desde la red de la empresa</p>
+  </header>
+  <nav>
+    <a href="#avisos">Avisos</a>
+    <a href="#vacaciones">Vacaciones</a>
+    <a href="#planilla">Planilla</a>
+    <a href="#contactos">Contactos</a>
+  </nav>
+
+  <main>
+    <section id="avisos">
+      <h2>Avisos</h2>
+      <div class="aviso"><strong>Capacitación obligatoria:</strong> manejo de medicamentos controlados, viernes 20 de noviembre, 9:00 en sala de reuniones.</div>
+      <div class="aviso"><strong>Aguinaldo:</strong> se acredita el 15 de diciembre junto con la planilla de la primera quincena.</div>
+      <div class="aviso"><strong>Uniformes:</strong> pasar a RRHH a recoger el nuevo uniforme antes del 30 de noviembre.</div>
+    </section>
+
+    <section id="vacaciones">
+      <h2>Vacaciones</h2>
+      <p>Todo colaborador con un año de servicio tiene derecho a <strong>15 días hábiles</strong> de vacaciones.</p>
+      <ol>
+        <li>Llenar el formulario de solicitud con al menos 15 días de anticipación.</li>
+        <li>Obtener la firma del jefe inmediato.</li>
+        <li>Entregarlo en RRHH, que confirma por correo en un máximo de 3 días.</li>
+      </ol>
+    </section>
+
+    <section id="planilla">
+      <h2>Planilla</h2>
+      <table>
+        <tr><th>Concepto</th><th>Fecha</th></tr>
+        <tr><td>Pago primera quincena</td><td>Día 15 de cada mes</td></tr>
+        <tr><td>Pago segunda quincena</td><td>Último día hábil del mes</td></tr>
+        <tr><td>Bono 14</td><td>Julio</td></tr>
+        <tr><td>Aguinaldo</td><td>Diciembre</td></tr>
+      </table>
+      <p>Las boletas de pago se entregan en RRHH. Dudas sobre descuentos (IGSS, ISR) con Planillas.</p>
+    </section>
+
+    <section id="contactos">
+      <h2>Contactos</h2>
+      <table>
+        <tr><th>Área</th><th>Extensión</th><th>Correo</th></tr>
+        <tr><td>Recursos Humanos</td><td>101</td><td>rrhh@farmaruta.local</td></tr>
+        <tr><td>Planillas</td><td>102</td><td>planillas@farmaruta.local</td></tr>
+        <tr><td>Soporte de TI</td><td>200</td><td>soporte@farmaruta.local</td></tr>
+      </table>
+    </section>
+  </main>
+
+  <footer>FarmaRuta · Uso interno · Servido por nginx en vm-intranet (10.10.0.133)</footer>
+</body>
+</html>
