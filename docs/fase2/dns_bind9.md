@@ -84,18 +84,27 @@ Después de que la VNet anunció 10.10.0.132, `nslookup rrhh.farmaruta.local` en
 
 ## Capturas
 
-| # | Captura | Resultado esperado |
-|---|---|---|
-| 1 | `named-checkconf` y `named-checkzone` en vm-dns | `OK` en ambas zonas |
-| 2 | `systemctl status named` | `active (running)` |
-| 3 | `nslookup rrhh.farmaruta.local` desde vm-ventas-01 | `10.10.0.133`, servidor 10.10.0.132 |
-| 4 | `nslookup intranet.farmaruta.local` desde vm-ventas-01 | `canonical name = rrhh.farmaruta.local` |
-| 5 | `nslookup 10.10.0.133` desde vm-ventas-01 | `name = rrhh.farmaruta.local` |
-| 6 | `nslookup google.com` desde vm-ventas-01 | Respuesta gracias al forwarder |
-| 7 | `nslookup rrhh.farmaruta.local 10.10.0.132` desde vm-visitas-01 | `connection timed out` |
-| 8 | Portal: VNet → DNS servers = Custom 10.10.0.132 | Configuración de DHCP |
+Todas en `capturas/fase2/dns/`.
 
-Evidencia en `capturas/fase2/dns/`: `08_*` (validación y arranque de BIND), `09_*` (consulta directa antes del cambio de la VNet), `10_*` (DNS de la VNet), `11_*` (pruebas finales desde vm-ventas-01) y `12_*` (bloqueo desde vm-visitas-01).
+| Archivo | Qué muestra | Resultado |
+|---|---|---|
+| `01`–`03_vm_dns_review_*.png` | Resumen de creación de vm-dns | B1s, Ubuntu 24.04, snet-datacenter, sin IP pública ni NSG en la NIC |
+| `04_vm_dns_deployment_completo.png` | Deployment | Completado |
+| `05_vm_dns_overview_ip_132.png` | Overview de la VM | Running, IP privada 10.10.0.132 |
+| `06_vm_dns_nsg_datacenter_regla_dns.png` | Reglas efectivas sobre la NIC | Allow-DNS-Interno (120): 53 desde Ventas |
+| `07_vm_dns_ip_estatica.png` | IP configurations | 10.10.0.132 (Static) |
+| `10_vnet_dns_custom_10.10.0.132.png` | VNet → DNS servers | Custom 10.10.0.132 (DHCP) |
+| `13_ssh_vm_dns_por_jump_host.png` | SSH saltando por vm-ti-01 | Acceso a vm-dns |
+| `14_vm_dns_named_checkzone_ok.png` | `named-checkconf` y `named-checkzone` | OK en ambas zonas |
+| `15_vm_dns_named_activo_puerto_53.png` | `systemctl status named` y `ss` | active (running), 10.10.0.132:53 UDP/TCP |
+| `16_vm_dns_zona_directa.png` | `db.farmaruta.local` | SOA, NS, A y CNAME |
+| `17_vm_dns_acl_y_forwarder.png` | `named.conf.options` | ACL internas, recursión limitada, forwarder |
+| `18_ventas_nslookup_rrhh.png` | `nslookup rrhh.farmaruta.local` desde vm-ventas-01 | 10.10.0.133 |
+| `19_ventas_nslookup_cname_y_ptr.png` | `intranet` (CNAME) y `nslookup 10.10.0.133` (PTR) | rrhh.farmaruta.local |
+| `20_ventas_nslookup_google_forwarder.png` | `nslookup google.com` desde vm-ventas-01 | Resuelve gracias al forwarder |
+| `21_visitas_nslookup_timeout.png` | `nslookup rrhh.farmaruta.local 10.10.0.132` desde vm-visitas-01 | Timeout: el NSG bloquea el puerto 53 |
+
+Salidas completas en texto: `08_*` (validación y arranque), `09_*` (consulta directa antes del cambio de la VNet), `11_*` (pruebas finales desde ventas) y `12_*` (bloqueo desde visitas).
 
 ## Tiempo de implementación
 
