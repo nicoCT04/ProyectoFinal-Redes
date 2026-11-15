@@ -1,0 +1,20 @@
+lfmendoza@LFMENDOZA-YOGA:~$ curl -s ifconfig.me; echo
+190.106.x.x
+lfmendoza@LFMENDOZA-YOGA:~$ curl -sI http://farmaruta-ventas.mexicocentral.cloudapp.azure.com | head -3
+HTTP/1.1 301 Moved Permanently
+Server: nginx
+Date: Sun, 15 Nov 2026 05:49:51 GMT
+lfmendoza@LFMENDOZA-YOGA:~$ curl -s -o /dev/null -w 'HTTPS %{http_code}  TLS ok=%{ssl_verify_result}\n' https://farmaruta-ventas.mexicocentral.cloudapp.azure.com
+HTTPS 200  TLS ok=0
+lfmendoza@LFMENDOZA-YOGA:~$ nc -zv -w 5 158.23.162.4 22
+nc: connect to 158.23.162.4 port 22 (tcp) timed out: Operation now in progress
+lfmendoza@LFMENDOZA-YOGA:~$ nc -zv -w 5 158.23.162.4 443
+Connection to 158.23.162.4 443 port [tcp/https] succeeded!
+lfmendoza@LFMENDOZA-YOGA:~$ nc -zv -w 5 158.23.161.215 22
+Connection to 158.23.161.215 22 port [tcp/ssh] succeeded!
+lfmendoza@LFMENDOZA-YOGA:~$ nc -zv -w 5 158.23.161.215 80
+nc: connect to 158.23.161.215 port 80 (tcp) timed out: Operation now in progress
+lfmendoza@LFMENDOZA-YOGA:~$ ssh -o PubkeyAuthentication=no -o PreferredAuthentications=password,keyboard-interactive azureuser@158.23.161.215
+azureuser@158.23.161.215: Permission denied (publickey).
+lfmendoza@LFMENDOZA-YOGA:~$ ssh -i ~/.ssh/farmaruta-key.pem root@158.23.161.215
+root@158.23.161.215: Permission denied (publickey).

@@ -1,0 +1,9 @@
+azureuser@vm-intranet:~$ sudo ss -tlnp | grep 8080
+LISTEN 0      5            0.0.0.0:8080      0.0.0.0:*    users:(("python3",pid=2609,fd=3))                                           
+azureuser@vm-intranet:~$ curl -s -o /dev/null -w 'local: HTTP %{http_code}\n' http://127.0.0.1:8080
+local: HTTP 200
+azureuser@vm-ti-01:~$ nc -zv -w 3 10.10.0.133 8080
+nc: connect to 10.10.0.133 port 8080 (tcp) timed out: Operation now in progress
+azureuser@vm-intranet:~$ sudo journalctl -k --since '-2 min' --no-pager | grep 'UFW BLOCK' | grep 'DPT=8080' | tail -2
+Nov 15 05:49:33 vm-intranet kernel: [UFW BLOCK] IN=eth0 OUT= MAC=7c:ed:8d:e8:00:42:00:aa:bb:cc:dd:ee:08:00 SRC=10.10.0.100 DST=10.10.0.133 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=63841 DF PROTO=TCP SPT=45280 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 
+Nov 15 05:49:34 vm-intranet kernel: [UFW BLOCK] IN=eth0 OUT= MAC=7c:ed:8d:e8:00:42:00:aa:bb:cc:dd:ee:08:00 SRC=10.10.0.100 DST=10.10.0.133 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=63842 DF PROTO=TCP SPT=45280 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 

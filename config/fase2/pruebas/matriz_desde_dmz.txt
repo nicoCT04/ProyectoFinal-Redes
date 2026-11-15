@@ -1,0 +1,20 @@
+azureuser@vm-web-dmz:~$ hostname -I
+10.10.0.148 
+azureuser@vm-web-dmz:~$ ping -c 2 -W 2 10.10.0.100
+PING 10.10.0.100 (10.10.0.100) 56(84) bytes of data.
+
+--- 10.10.0.100 ping statistics ---
+2 packets transmitted, 0 received, 100% packet loss, time 1018ms
+
+azureuser@vm-web-dmz:~$ ping -c 2 -W 2 10.10.0.68
+PING 10.10.0.68 (10.10.0.68) 56(84) bytes of data.
+
+--- 10.10.0.68 ping statistics ---
+2 packets transmitted, 0 received, 100% packet loss, time 1005ms
+
+azureuser@vm-web-dmz:~$ nc -zv -w 3 10.10.0.133 80
+nc: connect to 10.10.0.133 port 80 (tcp) timed out: Operation now in progress
+azureuser@vm-web-dmz:~$ nc -zv -w 3 10.10.0.133 22
+nc: connect to 10.10.0.133 port 22 (tcp) timed out: Operation now in progress
+azureuser@vm-web-dmz:~$ curl -sI -m 5 https://www.google.com | head -1
+HTTP/2 200 

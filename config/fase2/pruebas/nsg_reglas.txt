@@ -1,0 +1,29 @@
+--- nsg-visitas
+Prioridad    Nombre               Dir       Accion    Proto    Origen    Destino         Puertos
+-----------  -------------------  --------  --------  -------  --------  --------------  ---------
+100          Allow-Propia-Subred  Outbound  Allow     *        *         10.10.0.0/26    *
+4000         Deny-Redes-Internas  Outbound  Deny      *        *         VirtualNetwork  *
+--- nsg-ventas
+
+--- nsg-ti
+Prioridad    Nombre               Dir      Accion    Proto    Origen                                         Destino      Puertos
+-----------  -------------------  -------  --------  -------  ---------------------------------------------  -----------  ---------
+100          Allow-Propia-Subred  Inbound  Allow     *        10.10.0.96/27                                  *            *
+105          Allow-SSH-Admin      Inbound  Allow     TCP      181.174.x.x,190.14.x.x,190.106.x.x  10.10.0.100  22
+4000         Deny-VNet-hacia-TI   Inbound  Deny      *        VirtualNetwork                                 *            *
+--- nsg-datacenter
+Prioridad    Nombre               Dir      Accion    Proto    Origen          Destino      Puertos
+-----------  -------------------  -------  --------  -------  --------------  -----------  ---------
+100          Allow-TI             Inbound  Allow     *        10.10.0.96/27   *            *
+110          Allow-Propia-Subred  Inbound  Allow     *        10.10.0.128/28  *            *
+120          Allow-DNS-Interno    Inbound  Allow     *        10.10.0.64/27   10.10.0.132  53
+130          Allow-Web-Intranet   Inbound  Allow     TCP      10.10.0.64/27   10.10.0.133  80,443
+4000         Deny-VNet            Inbound  Deny      *        VirtualNetwork  *            *
+--- nsg-dmz
+Prioridad    Nombre                   Dir       Accion    Proto    Origen          Destino         Puertos
+-----------  -----------------------  --------  --------  -------  --------------  --------------  ---------
+100          Allow-Web-Internet       Inbound   Allow     TCP      Internet        *               80,443
+100          Allow-Propia-Subred      Outbound  Allow     *        *               10.10.0.144/28  *
+110          Allow-TI                 Inbound   Allow     *        10.10.0.96/27   *               *
+4000         Deny-VNet                Inbound   Deny      *        VirtualNetwork  *               *
+4000         Deny-DMZ-hacia-Internas  Outbound  Deny      *        *               VirtualNetwork  *
