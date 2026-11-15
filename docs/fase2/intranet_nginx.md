@@ -2,7 +2,7 @@
 
 > Sección para el reporte de la Fase 2. Pasar a Word junto con las capturas de `capturas/fase2/intranet/`.
 
-**Tiempo invertido:** _completar_ horas.
+**Tiempo invertido:** 1 hora.
 
 ## Qué se implementó
 
