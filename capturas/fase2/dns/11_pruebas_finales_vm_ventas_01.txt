@@ -1,0 +1,50 @@
+== Evidencia: resolucion con el DNS interno desde vm-ventas-01 (10.10.0.68) - 2026-11-15 19:14:25 UTC
+
+azureuser@vm-ventas-01:~$ resolvectl dns eth0
+Link 2 (eth0): 10.10.0.132
+
+azureuser@vm-ventas-01:~$ cat /etc/systemd/resolved.conf.d/farmaruta.conf
+[Resolve]
+DNS=10.10.0.132
+Domains=~farmaruta.local ~0.10.10.in-addr.arpa
+
+azureuser@vm-ventas-01:~$ nslookup rrhh.farmaruta.local
+Server:		127.0.0.53
+Address:	127.0.0.53#53
+
+Non-authoritative answer:
+Name:	rrhh.farmaruta.local
+Address: 10.10.0.133
+
+
+azureuser@vm-ventas-01:~$ nslookup intranet.farmaruta.local
+Server:		127.0.0.53
+Address:	127.0.0.53#53
+
+Non-authoritative answer:
+intranet.farmaruta.local	canonical name = rrhh.farmaruta.local.
+Name:	rrhh.farmaruta.local
+Address: 10.10.0.133
+
+
+azureuser@vm-ventas-01:~$ nslookup 10.10.0.133
+133.0.10.10.in-addr.arpa	name = rrhh.farmaruta.local.
+
+Authoritative answers can be found from:
+
+
+azureuser@vm-ventas-01:~$ nslookup google.com
+Server:		127.0.0.53
+Address:	127.0.0.53#53
+
+Non-authoritative answer:
+Name:	google.com
+Address: 192.178.56.206
+Name:	google.com
+Address: 2607:f8b0:4012:823::200e
+
+
+azureuser@vm-ventas-01:~$ dig rrhh.farmaruta.local +noall +answer +stats | head -3
+rrhh.farmaruta.local.	3599	IN	A	10.10.0.133
+;; Query time: 0 msec
+;; SERVER: 127.0.0.53#53(127.0.0.53) (UDP)

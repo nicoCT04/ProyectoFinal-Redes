@@ -1,0 +1,20 @@
+== Evidencia: Visitas NO llega al DNS interno - vm-visitas-01 (10.10.0.4) - 2026-11-15 19:14:45 UTC
+
+azureuser@vm-visitas-01:~$ resolvectl dns eth0
+Link 2 (eth0): 168.63.129.16
+
+azureuser@vm-visitas-01:~$ nslookup -timeout=3 -retry=1 rrhh.farmaruta.local 10.10.0.132
+;; communications error to 10.10.0.132#53: timed out
+;; no servers could be reached
+
+
+azureuser@vm-visitas-01:~$ nslookup google.com
+Server:		127.0.0.53
+Address:	127.0.0.53#53
+
+Non-authoritative answer:
+Name:	google.com
+Address: 192.178.56.110
+Name:	google.com
+Address: 2607:f8b0:4012:80f::200e
+
