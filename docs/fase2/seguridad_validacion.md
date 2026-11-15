@@ -138,14 +138,14 @@ Con las 5 VMs encendidas al mismo tiempo. TCP con `nc -zv -w 3 IP PUERTO` (*succ
 
 Coincide con el comportamiento que pide el enunciado:
 
-- **Visitas** sale a internet pero no llega a ninguna red interna (`nsg-visitas` → `Deny-Redes-Internas`, salida, 4000).
+- **Visitas** sale a internet pero no llega a ninguna red interna (`nsg-visitas` → `Deny-Redes-Internas`, salida, 4000), y ninguna subred interna salvo TI puede iniciar conexiones hacia ella (`Deny-VNet`, entrada, 4000).
 - **TI** llega a todas las subredes; ninguna llega a TI (`nsg-ti` → `Deny-VNet-hacia-TI`, 4000). TI también llega a vm-visitas-01 (ping y 22).
 - La **intranet** responde a Ventas y TI, no a Visitas ni a la DMZ (`nsg-datacenter` → `Allow-Web-Intranet` 130 y `Deny-VNet` 4000), y no existe desde internet porque no tiene IP pública.
 - La **DMZ** no inicia conexiones hacia la red interna (`nsg-dmz` → `Deny-DMZ-hacia-Internas`, salida, 4000).
 
 ¹ Pendiente de `vm-dns` (Daniela). Se corre con los mismos comandos cuando la VM exista: `nc -zv -w 3 10.10.0.132 53` y `nslookup rrhh.farmaruta.local 10.10.0.132`. Esperado: ✅ desde Ventas y TI, ❌ (timeout) desde Visitas y DMZ.
 
-También se probó el sentido contrario hacia Visitas: TI llega (ping y 22), la DMZ no (su NSG le niega la salida) y Ventas sí llega con ping. Eso último no lo cubre la tabla del enunciado y se explica en *Hallazgo: tráfico interno hacia Visitas*.
+También se probó el sentido contrario hacia Visitas: TI llega (ping y 22) y ni Ventas ni la DMZ llegan. En la primera corrida Ventas sí llegaba con ping; se explica y se corrige en *Hallazgo: tráfico interno hacia Visitas*.
 
 **¿Por qué TI llega a Ventas, pero Ventas no llega a TI?** Los NSG son **stateful**: cuando TI inicia la conexión, el NSG de TI deja pasar la respuesta aunque `Deny-VNet-hacia-TI` bloquee lo que **entra** desde la VNet. Cuando la conexión la inicia Ventas, el paquete es nuevo y se descarta.
 
@@ -215,11 +215,42 @@ Solo habilita la **salida**; la entrada desde internet sigue bloqueada (sin IP p
 
 Con todas las VMs encendidas apareció algo que la tabla del enunciado no contempla: desde **vm-ventas-01 el ping a vm-visitas-01 responde**.
 
-`nsg-visitas` solo tiene reglas de **salida** (para que Visitas no llegue a nada interno). De entrada aplica la regla por defecto `AllowVnetInBound` (65000), que deja a cualquier subred de la VNet iniciar conexiones hacia Visitas. El enunciado se cumple (Visitas no llega a las internas), pero lo ideal en una red de invitados es aislarla en los dos sentidos.
+`nsg-visitas` solo tenía reglas de **salida** (para que Visitas no llegue a nada interno). De entrada aplicaba la regla por defecto `AllowVnetInBound` (65000), que dejaba a cualquier subred de la VNet iniciar conexiones hacia Visitas. El enunciado se cumple (Visitas no llega a las internas), pero lo ideal en una red de invitados es aislarla en los dos sentidos.
 
-Lo que ya lo contiene es ufw: en vm-visitas-01 solo se permite 22 desde TI, así que `nc 10.10.0.4 22` desde Ventas da timeout y queda en el log como `[UFW BLOCK] SRC=10.10.0.68 DST=10.10.0.4 ... DPT=22`. El ping pasa porque ufw permite ICMP echo por defecto. Es otro ejemplo de por qué conviene tener las dos capas.
+Lo que ya lo contenía era ufw: en vm-visitas-01 solo se permite 22 desde TI, así que `nc 10.10.0.4 22` desde Ventas da timeout y queda en el log como `[UFW BLOCK] SRC=10.10.0.68 DST=10.10.0.4 ... DPT=22`. El ping pasa porque ufw permite ICMP echo por defecto. Es otro ejemplo de por qué conviene tener las dos capas.
 
-**Recomendación** (se le pasó a Nicolás, que administra los NSG): agregar a `nsg-visitas` dos reglas de entrada, `Allow-TI` (100, origen 10.10.0.96/27) y `Deny-VNet` (4000, origen `VirtualNetwork`), igual que en `nsg-datacenter`. Así TI sigue administrando las VMs de Visitas y ninguna otra subred puede iniciar conexiones hacia ellas. Evidencia en `config/fase2/pruebas/hallazgo_ventas_hacia_visitas.txt` y captura `23_hallazgo_ventas_hacia_visitas.png`.
+**Corrección.** Se agregaron a `nsg-visitas` tres reglas de **entrada**, con el mismo patrón que `nsg-datacenter` y `nsg-dmz` (se le avisó a Nicolás, que administra los NSG, y quedaron también en `02_firewall_nsg.sh` para que no se pierdan si se vuelve a correr el script):
+
+| Prioridad | Nombre | Acción | Origen | Para qué |
+|---|---|---|---|---|
+| 100 | `Allow-TI` | Allow | 10.10.0.96/27 | TI sigue administrando los equipos de Visitas |
+| 110 | `Allow-Visitas-Entre-Si` | Allow | 10.10.0.0/26 | Los dispositivos de visitas se siguen viendo entre sí |
+| 4000 | `Deny-VNet` | Deny | `VirtualNetwork` | Ninguna otra subred interna inicia conexiones hacia Visitas |
+
+```bash
+az network nsg rule create -g rg-farmaruta --nsg-name nsg-visitas -n Allow-TI --priority 100 \
+  --direction Inbound --access Allow --protocol '*' --source-address-prefixes 10.10.0.96/27 \
+  --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges '*'
+az network nsg rule create -g rg-farmaruta --nsg-name nsg-visitas -n Allow-Visitas-Entre-Si --priority 110 \
+  --direction Inbound --access Allow --protocol '*' --source-address-prefixes 10.10.0.0/26 \
+  --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges '*'
+az network nsg rule create -g rg-farmaruta --nsg-name nsg-visitas -n Deny-VNet --priority 4000 \
+  --direction Inbound --access Deny --protocol '*' --source-address-prefixes VirtualNetwork \
+  --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges '*'
+```
+
+**Verificación después del cambio:**
+
+| Prueba | Antes | Después |
+|---|---|---|
+| Ventas → Visitas, ping | ✅ responde | ❌ 100 % de pérdida |
+| Ventas → Visitas, 22/tcp | ❌ lo bloquea ufw (`[UFW BLOCK]`) | ❌ lo bloquea el NSG; ya no llega a la VM (0 líneas `[UFW BLOCK]`) |
+| TI → Visitas, ping y 22/tcp | ✅ | ✅ |
+| SSH de administración a vm-visitas-01 saltando por vm-ti-01 | ✅ | ✅ |
+| Visitas → internet | ✅ | ✅ (200) |
+| Visitas → Ventas, ping | ❌ | ❌ |
+
+Ahora Visitas queda aislada en los dos sentidos: el NSG es la primera barrera y ufw queda como respaldo. Evidencia en `config/fase2/pruebas/hallazgo_ventas_hacia_visitas.txt` (antes), `config/fase2/pruebas/correccion_entrada_visitas.txt` (después) y capturas `23_hallazgo_ventas_hacia_visitas.png` y `24_correccion_entrada_visitas.png`.
 
 ## Archivos de configuración
 
@@ -246,6 +277,7 @@ Lo que ya lo contiene es ufw: en vm-visitas-01 solo se permite 22 desde TI, así
 | 21 | `ufw_bloquea_puerto_no_autorizado` | Puerto 8080 bloqueado por ufw aunque el NSG lo permite, con el log `[UFW BLOCK]` |
 | 22 | `pruebas_desde_internet` | 301 → HTTPS, 22 cerrado en la DMZ, SSH sin contraseña ni root |
 | 23 | `hallazgo_ventas_hacia_visitas` | Ping de Ventas a Visitas pasa por `AllowVnetInBound`; el TCP lo bloquea ufw |
+| 24 | `correccion_entrada_visitas` | Con las reglas de entrada de `nsg-visitas`, Ventas ya no llega; TI e internet siguen funcionando |
 
 ## Tiempo de implementación
 
@@ -253,7 +285,7 @@ Lo que ya lo contiene es ufw: en vm-visitas-01 solo se permite 22 desde TI, así
 |---|---|
 | VMs de prueba y cuota: análisis, Spot, cambio a B1s de los servidores, salida a internet | 1.5 h |
 | Hardening: script, ufw, SSH y servicios en 5 VMs, antes/después | 1.5 h |
-| Pruebas: nmap, matriz desde 4 subredes, desde internet, defensa en profundidad | 1.5 h |
+| Pruebas: nmap, matriz desde 4 subredes, desde internet, defensa en profundidad, corrección de `nsg-visitas` | 2 h |
 | Diagrama de red actualizado | 1 h |
 | Sección del reporte y capturas | 1 h |
-| **Total** | **6.5 h** |
+| **Total** | **7 h** |
