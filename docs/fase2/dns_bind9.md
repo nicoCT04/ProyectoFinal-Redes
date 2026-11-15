@@ -21,6 +21,7 @@ La VM se creó en el portal con tamaño `Standard_B1s` (1 vCPU, 1 GiB) en vez de
 | `named.conf.local` | Declara las dos zonas de tipo `master` y el archivo de cada una |
 | `db.farmaruta.local` | Zona directa: SOA, NS, registros A y CNAME |
 | `db.10.10.0` | Zona inversa: SOA, NS y registros PTR |
+| `resolved-farmaruta.conf` | Cliente: `/etc/systemd/resolved.conf.d/farmaruta.conf` en ventas, TI e intranet |
 
 El script `config/fase2/05_dns.sh` reproduce toda la instalación desde Cloud Shell.
 
@@ -71,6 +72,10 @@ Es defensa en profundidad: aunque alguien abriera el NSG por error, BIND seguir�
 | Expire | 604800 s | Un secundario deja de responder tras 1 semana sin contactar al primario |
 | TTL negativo | 300 s | Cuánto se recuerda una respuesta "no existe" (NXDOMAIN) |
 
+### Problema encontrado: `.local` y systemd-resolved
+
+Después de que la VNet anunció 10.10.0.132, `nslookup rrhh.farmaruta.local` en las VMs devolvía `SERVFAIL` y `resolvectl` decía *"No appropriate name servers or networks for name found"*, aunque `nslookup rrhh.farmaruta.local 10.10.0.132` sí funcionaba. El resolver de Ubuntu (`systemd-resolved`) reserva el sufijo `.local` para **Multicast DNS** (mDNS, RFC 6762) y no lo manda al DNS normal. Se resolvió con un **dominio de enrutamiento** (`Domains=~farmaruta.local`) que le indica que esos nombres, y la zona inversa, se pregunten a 10.10.0.132. En una red real se elegiría un dominio que no termine en `.local` (por ejemplo `corp.farmaruta.com`) para evitar este conflicto.
+
 ## Consideraciones de firewall (NSG)
 
 - `nsg-datacenter` regla **Allow-DNS-Interno** (prioridad 120): permite UDP y TCP 53 desde Ventas hacia 10.10.0.132. TI entra por **Allow-TI** (100) y la intranet por **Allow-Propia-Subred** (110).
@@ -89,6 +94,8 @@ Es defensa en profundidad: aunque alguien abriera el NSG por error, BIND seguir�
 | 6 | `nslookup google.com` desde vm-ventas-01 | Respuesta gracias al forwarder |
 | 7 | `nslookup rrhh.farmaruta.local 10.10.0.132` desde vm-visitas-01 | `connection timed out` |
 | 8 | Portal: VNet → DNS servers = Custom 10.10.0.132 | Configuración de DHCP |
+
+Evidencia en `capturas/fase2/dns/`: `08_*` (validación y arranque de BIND), `09_*` (consulta directa antes del cambio de la VNet), `10_*` (DNS de la VNet), `11_*` (pruebas finales desde vm-ventas-01) y `12_*` (bloqueo desde vm-visitas-01).
 
 ## Tiempo de implementación
 
