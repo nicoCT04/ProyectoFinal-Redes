@@ -1,0 +1,18 @@
+azureuser@vm-ventas-01:~$ ping -c 2 -W 2 10.10.0.4
+PING 10.10.0.4 (10.10.0.4) 56(84) bytes of data.
+64 bytes from 10.10.0.4: icmp_seq=1 ttl=64 time=0.880 ms
+64 bytes from 10.10.0.4: icmp_seq=2 ttl=64 time=0.963 ms
+
+--- 10.10.0.4 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1022ms
+rtt min/avg/max/mdev = 0.880/0.921/0.963/0.041 ms
+azureuser@vm-ventas-01:~$ nc -zv -w 3 10.10.0.4 22
+nc: connect to 10.10.0.4 port 22 (tcp) timed out: Operation now in progress
+azureuser@vm-visitas-01:~$ sudo journalctl -k --since '-1 min' --no-pager | grep 'UFW BLOCK' | grep 'SRC=10.10.0.68' | tail -1
+Nov 15 16:38:10 vm-visitas-01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=7c:1e:52:2f:f4:d5:b4:3a:96:a2:23:04:08:00 SRC=10.10.0.68 DST=10.10.0.4 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=42100 DF PROTO=TCP SPT=59762 DPT=22 WINDOW=64240 RES=0x00 SYN URGP=0 
+lfmendoza@LFMENDOZA-YOGA:~$ az network nsg rule list -g rg-farmaruta --nsg-name nsg-visitas --include-default --query "[?direction=='Inbound'].{Prioridad:priority,Nombre:name,Accion:access,Origen:sourceAddressPrefix}" -o table
+Prioridad    Nombre                         Accion    Origen
+-----------  -----------------------------  --------  -----------------
+65000        AllowVnetInBound               Allow     VirtualNetwork
+65001        AllowAzureLoadBalancerInBound  Allow     AzureLoadBalancer
+65500        DenyAllInBound                 Deny      *
