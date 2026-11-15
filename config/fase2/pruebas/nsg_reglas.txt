@@ -1,8 +1,11 @@
 --- nsg-visitas
-Prioridad    Nombre               Dir       Accion    Proto    Origen    Destino         Puertos
------------  -------------------  --------  --------  -------  --------  --------------  ---------
-100          Allow-Propia-Subred  Outbound  Allow     *        *         10.10.0.0/26    *
-4000         Deny-Redes-Internas  Outbound  Deny      *        *         VirtualNetwork  *
+Prioridad    Nombre                  Dir       Accion    Proto    Origen          Destino         Puertos
+-----------  ----------------------  --------  --------  -------  --------------  --------------  ---------
+100          Allow-Propia-Subred     Outbound  Allow     *        *               10.10.0.0/26    *
+100          Allow-TI                Inbound   Allow     *        10.10.0.96/27   *               *
+110          Allow-Visitas-Entre-Si  Inbound   Allow     *        10.10.0.0/26    *               *
+4000         Deny-Redes-Internas     Outbound  Deny      *        *               VirtualNetwork  *
+4000         Deny-VNet               Inbound   Deny      *        VirtualNetwork  *               *
 --- nsg-ventas
 
 --- nsg-ti

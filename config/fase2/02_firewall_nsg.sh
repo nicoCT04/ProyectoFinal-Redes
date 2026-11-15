@@ -8,7 +8,7 @@
 # asi quedan espacios libres para excepciones (100-3999).
 #
 # Comportamiento pedido por el enunciado:
-#   - Visitas: internet si, redes internas no            -> nsg-visitas (salida)
+#   - Visitas: internet si, redes internas no            -> nsg-visitas (salida y entrada)
 #   - TI llega a todas; nadie llega a TI                 -> nsg-ti (entrada)
 #   - Intranet accesible desde las subredes internas,
 #     no desde Visitas ni desde Internet                 -> nsg-datacenter (entrada)
@@ -37,6 +37,14 @@ regla nsg-visitas Allow-Propia-Subred   100 Outbound Allow '*' '*' "$NET_VISITAS
   "Los dispositivos de visitas se ven entre si"
 regla nsg-visitas Deny-Redes-Internas  4000 Outbound Deny  '*' '*' VirtualNetwork '*' \
   "Visitas no alcanza ninguna subred interna; internet sigue por AllowInternetOutBound"
+# De entrada tambien se aisla: sin esto aplica AllowVnetInBound (65000) y las
+# demas subredes podrian iniciar conexiones hacia los equipos de visitas.
+regla nsg-visitas Allow-TI              100 Inbound  Allow '*' "$NET_TI" '*' '*' \
+  "TI administra los equipos de visitas"
+regla nsg-visitas Allow-Visitas-Entre-Si 110 Inbound Allow '*' "$NET_VISITAS" '*' '*' \
+  "Los dispositivos de visitas se ven entre si"
+regla nsg-visitas Deny-VNet            4000 Inbound  Deny  '*' VirtualNetwork '*' '*' \
+  "Ninguna otra subred interna inicia conexiones hacia visitas"
 
 echo ">> TI: nadie inicia conexiones hacia TI (salvo SSH de administracion desde internet)"
 if [ -n "$ADMIN_IPS" ]; then

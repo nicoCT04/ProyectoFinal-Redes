@@ -1,0 +1,39 @@
+azureuser@vm-ventas-01:~$ ping -c 2 -W 2 10.10.0.4
+PING 10.10.0.4 (10.10.0.4) 56(84) bytes of data.
+
+--- 10.10.0.4 ping statistics ---
+2 packets transmitted, 0 received, 100% packet loss, time 1014ms
+
+azureuser@vm-ventas-01:~$ nc -zv -w 3 10.10.0.4 22
+nc: connect to 10.10.0.4 port 22 (tcp) timed out: Operation now in progress
+azureuser@vm-visitas-01:~$ sudo journalctl -k --since '-2 min' --no-pager | grep 'UFW BLOCK' | grep -c 'SRC=10.10.0.68'
+0
+azureuser@vm-ti-01:~$ ping -c 2 -W 2 10.10.0.4
+PING 10.10.0.4 (10.10.0.4) 56(84) bytes of data.
+64 bytes from 10.10.0.4: icmp_seq=1 ttl=64 time=0.982 ms
+64 bytes from 10.10.0.4: icmp_seq=2 ttl=64 time=1.10 ms
+
+--- 10.10.0.4 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1001ms
+rtt min/avg/max/mdev = 0.982/1.040/1.099/0.058 ms
+azureuser@vm-ti-01:~$ nc -zv -w 3 10.10.0.4 22
+Connection to 10.10.0.4 22 port [tcp/ssh] succeeded!
+lfmendoza@LFMENDOZA-YOGA:~$ ssh -i ~/.ssh/farmaruta-key.pem -J azureuser@vm-ti-01 azureuser@10.10.0.4 hostname
+vm-visitas-01
+azureuser@vm-visitas-01:~$ curl -s -o /dev/null -w '%{http_code}\n' https://www.google.com
+200
+azureuser@vm-visitas-01:~$ ping -c 2 -W 2 10.10.0.68
+PING 10.10.0.68 (10.10.0.68) 56(84) bytes of data.
+
+--- 10.10.0.68 ping statistics ---
+2 packets transmitted, 0 received, 100% packet loss, time 1030ms
+
+lfmendoza@LFMENDOZA-YOGA:~$ az network nsg rule list -g rg-farmaruta --nsg-name nsg-visitas --include-default --query "[?direction=='Inbound'] | sort_by(@, &priority)[].{Prioridad:priority,Nombre:name,Accion:access,Origen:sourceAddressPrefix}" -o table
+Prioridad    Nombre                         Accion    Origen
+-----------  -----------------------------  --------  -----------------
+100          Allow-TI                       Allow     10.10.0.96/27
+110          Allow-Visitas-Entre-Si         Allow     10.10.0.0/26
+4000         Deny-VNet                      Deny      VirtualNetwork
+65000        AllowVnetInBound               Allow     VirtualNetwork
+65001        AllowAzureLoadBalancerInBound  Allow     AzureLoadBalancer
+65500        DenyAllInBound                 Deny      *
