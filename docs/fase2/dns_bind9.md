@@ -108,10 +108,14 @@ Salidas completas en texto: `08_*` (validación y arranque), `09_*` (consulta di
 
 ## Tiempo de implementación
 
+Estimado a partir de las marcas de tiempo del portal y de las VMs (15/11/2026, hora de Guatemala).
+
 | Tarea | Tiempo |
 |---|---|
-| Crear vm-dns (IP fija, sin IP pública) | _completar_ |
-| Instalar y configurar BIND9 (opciones, zonas) | _completar_ |
-| Configurar DNS de la VNet y reiniciar VMs | _completar_ |
-| Pruebas y capturas | _completar_ |
-| **Total** | _completar_ |
+| Preparar los archivos de configuración (`named.conf.*`, zonas) y el script `05_dns.sh` | 25 min |
+| Crear vm-dns en el portal (incluye cambiar a `Standard_B1s` por la cuota de vCPUs) y fijar la IP 10.10.0.132 | 35 min |
+| Acceso SSH por jump host (agregar el rango de IP a `Allow-SSH-Admin`) | 10 min |
+| Instalar BIND9, copiar la configuración, validar y arrancar `named` | 10 min |
+| Configurar el DNS de la VNet, reiniciar VMs y corregir `.local` en systemd-resolved | 15 min |
+| Pruebas y capturas | 15 min |
+| **Total** | **1 h 50 min** |
