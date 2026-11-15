@@ -59,5 +59,6 @@ Esto solo permite **salir** (para descargar paquetes); no abre ninguna entrada d
 | 3 | vm-ti-01 | `curl -H "Host: rrhh.farmaruta.local" http://10.10.0.133` | ✅ HTML de RRHH, `HTTP 200` | `03_curl_desde_ti.jpg` |
 | 4 | vm-visitas-01 | `curl -m 5 http://10.10.0.133` | ⏳ pendiente: la VM aún no existe (Fernando). Esperado: timeout | — |
 | 5 | Cloud Shell | `az vm list-ip-addresses` | ✅ vm-intranet solo tiene 10.10.0.133, sin IP pública | `05_vm_intranet_sin_ip_publica.jpg` |
+| 5b | Portal | vm-intranet → Información general → Redes | ✅ *Dirección IP pública: -*, *Dirección IP privada: 10.10.0.133* | `05b_portal_sin_ip_publica.jpg` |
 
 Las pruebas pendientes se corren con `bash 06_intranet.sh probar` cuando existan vm-ventas-01, vm-visitas-01 y el DNS.
