@@ -56,7 +56,7 @@ Esto solo permite **salir** (para descargar paquetes); no abre ninguna entrada d
 |---|---|---|---|---|
 | 1 | vm-intranet | `nginx -t` + `ss -tlnp` | ✅ `test is successful`, escucha solo en `10.10.0.133:80`, `HTTP 200` | `01_nginx_t_instalacion.jpg` |
 | 2 | vm-ventas-01 | `nslookup` + `curl http://rrhh.farmaruta.local` y `http://intranet.farmaruta.local` | ✅ el DNS interno resuelve a 10.10.0.133, devuelve el HTML de RRHH con `HTTP 200`; el alias también da `HTTP 200` | `02_curl_desde_ventas.jpg` |
-| 3 | vm-ti-01 | `curl -H "Host: rrhh.farmaruta.local" http://10.10.0.133` | ✅ HTML de RRHH, `HTTP 200` | `03_curl_desde_ti.jpg` |
+| 3 | vm-ti-01 | `nslookup` + `curl http://rrhh.farmaruta.local` y `http://intranet.farmaruta.local` | ✅ resuelve a 10.10.0.133, HTML de RRHH con `HTTP 200`; el alias también da `HTTP 200` | `03_curl_desde_ti.jpg` |
 | 4 | vm-visitas-01 | `curl -m 5 http://10.10.0.133` y `http://rrhh.farmaruta.local` | ✅ bloqueado: por IP da *timeout* (`exit 28`, el NSG descarta el paquete); por nombre ni siquiera resuelve (`exit 6`, Visitas no llega al DNS interno) | `04_curl_desde_visitas_bloqueado.jpg` |
 | 5 | Cloud Shell | `az vm list-ip-addresses` | ✅ vm-intranet solo tiene 10.10.0.133, sin IP pública | `05_vm_intranet_sin_ip_publica.jpg` |
 | 5b | Portal | vm-intranet → Información general → Redes | ✅ *Dirección IP pública: -*, *Dirección IP privada: 10.10.0.133* | `05b_portal_sin_ip_publica.jpg` |
