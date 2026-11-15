@@ -113,11 +113,12 @@ Es decir, un servicio que alguien deje abierto por error no queda expuesto. Al t
 TI es la única subred que el NSG deja llegar a todos los puertos, así que desde `vm-ti-01` se ve exactamente lo que deja pasar ufw. Escaneo de los 65 535 puertos TCP:
 
 ```bash
-sudo nmap -Pn -sS -p- --min-rate 2000 10.10.0.68 10.10.0.133 10.10.0.148
+sudo nmap -Pn -sS -p- --min-rate 2000 10.10.0.4 10.10.0.68 10.10.0.133 10.10.0.148
 ```
 
 | Host | open | El resto |
 |---|---|---|
+| vm-visitas-01 (10.10.0.4) | 22 | 65 534 *filtered* |
 | vm-ventas-01 (10.10.0.68) | 22 | 65 534 *filtered* |
 | vm-intranet (10.10.0.133) | 22, 80 | 65 533 *filtered* |
 | vm-web-dmz (10.10.0.148) | 22, 80, 443 | 65 532 *filtered* |
@@ -126,14 +127,14 @@ sudo nmap -Pn -sS -p- --min-rate 2000 10.10.0.68 10.10.0.133 10.10.0.148
 
 ### Matriz de conectividad
 
-TCP con `nc -zv -w 3 IP PUERTO` (*succeeded* o *timed out*), ICMP con `ping -c 2 -W 2` e internet con `curl -sI https://www.google.com`.
+Con las 5 VMs encendidas al mismo tiempo. TCP con `nc -zv -w 3 IP PUERTO` (*succeeded* o *timed out*), ICMP con `ping -c 2 -W 2` e internet con `curl -sI https://www.google.com`.
 
 | Desde \ Hacia | TI (ping / 22) | Ventas (ping) | DNS :53 | Intranet :80 | DMZ :80/443 (IP privada) | Internet |
 |---|---|---|---|---|---|---|
-| **Visitas** (10.10.0.4) | ❌ / ❌ | ❌ ¹ | ⏳ ² | ❌ | ❌ / ❌ | ✅ |
-| **Ventas** (10.10.0.68) | ❌ / ❌ | — | ⏳ ² | ✅ | ❌ | ✅ |
-| **TI** (10.10.0.100) | — | ✅ | ⏳ ² | ✅ | ✅ / ✅ | ✅ |
-| **DMZ** (10.10.0.148) | ❌ | ❌ | ⏳ ² | ❌ | — | ✅ |
+| **Visitas** (10.10.0.4) | ❌ / ❌ | ❌ | ⏳ ¹ | ❌ | ❌ / ❌ | ✅ |
+| **Ventas** (10.10.0.68) | ❌ / ❌ | — | ⏳ ¹ | ✅ | ❌ | ✅ |
+| **TI** (10.10.0.100) | — | ✅ | ⏳ ¹ | ✅ | ✅ / ✅ | ✅ |
+| **DMZ** (10.10.0.148) | ❌ | ❌ | ⏳ ¹ | ❌ | — | ✅ |
 
 Coincide con el comportamiento que pide el enunciado:
 
@@ -142,9 +143,9 @@ Coincide con el comportamiento que pide el enunciado:
 - La **intranet** responde a Ventas y TI, no a Visitas ni a la DMZ (`nsg-datacenter` → `Allow-Web-Intranet` 130 y `Deny-VNet` 4000), y no existe desde internet porque no tiene IP pública.
 - La **DMZ** no inicia conexiones hacia la red interna (`nsg-dmz` → `Deny-DMZ-hacia-Internas`, salida, 4000).
 
-¹ vm-ventas-01 y vm-visitas-01 no pudieron estar encendidas a la vez por la cuota (ver *Problemas encontrados*). Visitas → Ventas lo bloquea la misma regla `Deny-Redes-Internas` (destino `VirtualNetwork`) que bloqueó las conexiones hacia TI, el Data Center y la DMZ.
+¹ Pendiente de `vm-dns` (Daniela). Se corre con los mismos comandos cuando la VM exista: `nc -zv -w 3 10.10.0.132 53` y `nslookup rrhh.farmaruta.local 10.10.0.132`. Esperado: ✅ desde Ventas y TI, ❌ (timeout) desde Visitas y DMZ.
 
-² Pendiente de `vm-dns` (Daniela). Se corre con los mismos comandos cuando la VM exista: `nc -zv -w 3 10.10.0.132 53` y `nslookup rrhh.farmaruta.local 10.10.0.132`. Esperado: ✅ desde Ventas y TI, ❌ (timeout) desde Visitas y DMZ.
+También se probó el sentido contrario hacia Visitas: TI llega (ping y 22), la DMZ no (su NSG le niega la salida) y Ventas sí llega con ping. Eso último no lo cubre la tabla del enunciado y se explica en *Hallazgo: tráfico interno hacia Visitas*.
 
 **¿Por qué TI llega a Ventas, pero Ventas no llega a TI?** Los NSG son **stateful**: cuando TI inicia la conexión, el NSG de TI deja pasar la respuesta aunque `Deny-VNet-hacia-TI` bloquee lo que **entra** desde la VNet. Cuando la conexión la inicia Ventas, el paquete es nuevo y se descarta.
 
@@ -177,18 +178,28 @@ Las salidas están en `config/fase2/pruebas/`. En los archivos se ocultaron las 
 
 ### Cuota de vCPU: 6 por región, contando las VMs apagadas
 
-Al crear las VMs de prueba la suscripción ya estaba en **6 de 6 vCPU** en Mexico Central (vm-ti-01, vm-intranet y vm-web-dmz, de 2 vCPU cada una):
+Al crear las VMs de prueba la suscripción ya estaba en **6 de 6 vCPU** en Mexico Central (vm-ti-01, vm-intranet y vm-web-dmz, de 2 vCPU cada una), y Azure no dejaba crear ninguna VM más, tampoco la `vm-dns`:
 
 ```
 az vm list-usage -l mexicocentral
 Total Regional vCPUs     6   6
 ```
 
-Dos detalles importantes: Azure cuenta las vCPU de las VMs **detenidas (deallocated)**, así que apagar una VM no libera cuota, y los tamaños de 1 vCPU (`B1s`, `B1ls`, `A1_v2`, `F1`) salen como `NotAvailableForSubscription` en Azure for Students.
+Azure cuenta las vCPU de las VMs **detenidas (deallocated)**: apagar una VM deja de cobrar el cómputo, pero no libera cuota. Solo se libera al borrar la VM. Con 6 VMs de 2 vCPU (12 en total) el diseño no cabía.
 
-Solución: las VMs de prueba se crearon como **VM Spot** (`--priority Spot --eviction-policy Deallocate`), que usan una cuota aparte (*Low-priority vCPUs*, límite 3). En ese cupo cabe una sola VM de 2 vCPU, así que vm-ventas-01 y vm-visitas-01 se **rotaron**: primero se probó desde Ventas, se borró, se creó Visitas con la misma configuración (IP fija, sin IP pública, DNS de Azure en la NIC, hardening) y al final se volvió a dejar vm-ventas-01 para las pruebas del DNS y la intranet. Son clientes desechables, sin datos, y Spot además es más barato.
+Revisando las restricciones con `az vm list-skus`, los tamaños de 1 vCPU solo están restringidos en la **zona 1** (`"type": "Zone"`, igual que `B2ats_v2`); en la zona 2 están disponibles. La solución combinó tres cuotas distintas:
 
-La misma cuota impide crear `vm-dns` con otra VM de 2 vCPU. Se le pasó al grupo una propuesta que no cambia el diseño: agregar la IP secundaria 10.10.0.132 a la NIC de `vm-intranet` y correr BIND9 ahí (nginx ya escucha solo en 10.10.0.133).
+| Cuota | Límite | Uso |
+|---|---|---|
+| Total regional | 6 vCPU | vm-ti-01, vm-intranet, vm-web-dmz y vm-dns en `Standard_B1s` (1 vCPU c/u) + vm-visitas-01 en `B2ats_v2` (2) = 6 |
+| Familia BS (`B1s`) | 4 vCPU | Los 4 servidores = 4 |
+| Low-priority (Spot) | 3 vCPU | vm-ventas-01 en `B2ats_v2` como **VM Spot** = 2 |
+
+- **Servidores en B1s.** vm-ti-01, vm-intranet y vm-web-dmz se cambiaron de tamaño (`az vm deallocate` → `az vm resize --size Standard_B1s` → `az vm start`), una por una y en un momento sin nadie conectado. Conservan disco, IPs privadas y públicas, certificado y configuración; después de cada una se verificó el servicio (intranet 200, HTTPS 200 y redirección 301, salto SSH). 1 GiB de RAM alcanza para nginx, BIND9 o un jump host, y el costo por hora es prácticamente el mismo.
+- **vm-ventas-01 como Spot** (`--priority Spot --eviction-policy Deallocate`): usa la cuota *Low-priority*, separada de la regional. Si Azure necesita la capacidad la puede desalojar, lo cual no importa en un cliente de prueba.
+- **vm-visitas-01 en la zona 3**: en la zona 2 no había capacidad de `B2ats_v2` en ese momento (`ZonalAllocationFailed`). La VNet y las subredes son regionales, así que la zona no cambia nada del diseño de red.
+
+Resultado: las 6 VMs caben encendidas al mismo tiempo y queda exactamente 1 vCPU (`B1s`, zona 2) para `vm-dns`. `00_variables.sh` y `03_vms.sh` se actualizaron con estos tamaños y zonas.
 
 ### Las VMs de prueba no salían a internet
 
@@ -199,6 +210,16 @@ az network vnet subnet update -g rg-farmaruta --vnet-name vnet-farmaruta -n snet
 ```
 
 Solo habilita la **salida**; la entrada desde internet sigue bloqueada (sin IP pública y con `DenyAllInBound`).
+
+## Hallazgo: tráfico interno hacia Visitas
+
+Con todas las VMs encendidas apareció algo que la tabla del enunciado no contempla: desde **vm-ventas-01 el ping a vm-visitas-01 responde**.
+
+`nsg-visitas` solo tiene reglas de **salida** (para que Visitas no llegue a nada interno). De entrada aplica la regla por defecto `AllowVnetInBound` (65000), que deja a cualquier subred de la VNet iniciar conexiones hacia Visitas. El enunciado se cumple (Visitas no llega a las internas), pero lo ideal en una red de invitados es aislarla en los dos sentidos.
+
+Lo que ya lo contiene es ufw: en vm-visitas-01 solo se permite 22 desde TI, así que `nc 10.10.0.4 22` desde Ventas da timeout y queda en el log como `[UFW BLOCK] SRC=10.10.0.68 DST=10.10.0.4 ... DPT=22`. El ping pasa porque ufw permite ICMP echo por defecto. Es otro ejemplo de por qué conviene tener las dos capas.
+
+**Recomendación** (se le pasó a Nicolás, que administra los NSG): agregar a `nsg-visitas` dos reglas de entrada, `Allow-TI` (100, origen 10.10.0.96/27) y `Deny-VNet` (4000, origen `VirtualNetwork`), igual que en `nsg-datacenter`. Así TI sigue administrando las VMs de Visitas y ninguna otra subred puede iniciar conexiones hacia ellas. Evidencia en `config/fase2/pruebas/hallazgo_ventas_hacia_visitas.txt` y captura `23_hallazgo_ventas_hacia_visitas.png`.
 
 ## Archivos de configuración
 
@@ -224,14 +245,15 @@ Solo habilita la **salida**; la entrada desde internet sigue bloqueada (sin IP p
 | 17–20 | `matriz_desde_visitas` / `ventas` / `ti` / `dmz` | Una fila de la matriz por captura |
 | 21 | `ufw_bloquea_puerto_no_autorizado` | Puerto 8080 bloqueado por ufw aunque el NSG lo permite, con el log `[UFW BLOCK]` |
 | 22 | `pruebas_desde_internet` | 301 → HTTPS, 22 cerrado en la DMZ, SSH sin contraseña ni root |
+| 23 | `hallazgo_ventas_hacia_visitas` | Ping de Ventas a Visitas pasa por `AllowVnetInBound`; el TCP lo bloquea ufw |
 
 ## Tiempo de implementación
 
 | Tarea | Tiempo |
 |---|---|
-| Crear y rotar vm-ventas-01 y vm-visitas-01 (cuota, Spot, salida a internet) | 1 h |
+| VMs de prueba y cuota: análisis, Spot, cambio a B1s de los servidores, salida a internet | 1.5 h |
 | Hardening: script, ufw, SSH y servicios en 5 VMs, antes/después | 1.5 h |
 | Pruebas: nmap, matriz desde 4 subredes, desde internet, defensa en profundidad | 1.5 h |
 | Diagrama de red actualizado | 1 h |
 | Sección del reporte y capturas | 1 h |
-| **Total** | **6 h** |
+| **Total** | **6.5 h** |
