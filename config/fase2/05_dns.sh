@@ -13,8 +13,9 @@
 # Uso (desde config/fase2/ en Cloud Shell):
 #   bash 05_dns.sh instalar   instala BIND9 y copia la configuracion en vm-dns
 #   bash 05_dns.sh red        la VNet anuncia 10.10.0.132 por DHCP y reinicia clientes
+#   bash 05_dns.sh clientes   dominio de enrutamiento .local en los clientes internos
 #   bash 05_dns.sh probar     consultas de prueba desde vm-ventas-01 y vm-visitas-01
-#   bash 05_dns.sh            las tres cosas en orden
+#   bash 05_dns.sh            todo en orden
 # =====================================================================
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -67,6 +68,19 @@ red() {
   echo "   esperar ~1 minuto antes de probar"
 }
 
+# systemd-resolved no manda los .local al DNS unicast: se agrega un dominio de
+# enrutamiento (ver dns/resolved-farmaruta.conf) en cada cliente interno.
+clientes() {
+  local conf; conf=$(base64 -w0 dns/resolved-farmaruta.conf)
+  for vm in vm-ventas-01 vm-ti-01 vm-intranet; do
+    echo ">> Cliente DNS en $vm"
+    correr "$vm" "mkdir -p /etc/systemd/resolved.conf.d
+echo '$conf' | base64 -d > /etc/systemd/resolved.conf.d/farmaruta.conf
+systemctl restart systemd-resolved
+resolvectl query rrhh.farmaruta.local" || echo "   ($vm no disponible, se omite)"
+  done
+}
+
 probar() {
   echo ">> Desde vm-ventas-01 (debe resolver todo)"
   correr vm-ventas-01 "
@@ -86,7 +100,8 @@ nslookup -timeout=3 -retry=1 rrhh.farmaruta.local 10.10.0.132 || true
 case "${1:-todo}" in
   instalar) instalar ;;
   red)      red ;;
+  clientes) clientes ;;
   probar)   probar ;;
-  todo)     instalar; red; echo ">> Esperando 90 s a que reinicien"; sleep 90; probar ;;
-  *) echo "Uso: bash 05_dns.sh [instalar|red|probar]"; exit 1 ;;
+  todo)     instalar; red; echo ">> Esperando 90 s a que reinicien"; sleep 90; clientes; probar ;;
+  *) echo "Uso: bash 05_dns.sh [instalar|red|clientes|probar]"; exit 1 ;;
 esac
