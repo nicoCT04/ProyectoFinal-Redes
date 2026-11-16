@@ -1,0 +1,45 @@
+azureuser@vm-dns:~$ sudo bash /tmp/hardening.sh dns
+>> ufw (dns)
+Default incoming policy changed to 'deny'
+(be sure to update your rules accordingly)
+Default outgoing policy changed to 'allow'
+(be sure to update your rules accordingly)
+Logging enabled
+Rules updated
+Rules updated
+Rules updated
+Rules updated
+Rules updated
+Rules updated
+Rules updated
+Firewall is active and enabled on system startup
+Status: active
+
+     To                         Action      From
+     --                         ------      ----
+[ 1] 22/tcp                     ALLOW IN    10.10.0.96/27              # SSH solo desde TI
+[ 2] 53/udp                     ALLOW IN    10.10.0.64/27              # DNS interno
+[ 3] 53/tcp                     ALLOW IN    10.10.0.64/27              # DNS interno (TCP)
+[ 4] 53/udp                     ALLOW IN    10.10.0.96/27              # DNS interno
+[ 5] 53/tcp                     ALLOW IN    10.10.0.96/27              # DNS interno (TCP)
+[ 6] 53/udp                     ALLOW IN    10.10.0.128/28             # DNS interno
+[ 7] 53/tcp                     ALLOW IN    10.10.0.128/28             # DNS interno (TCP)
+
+>> sshd
+logingracetime 30
+maxauthtries 3
+permitrootlogin no
+passwordauthentication no
+kbdinteractiveauthentication no
+x11forwarding no
+allowtcpforwarding no
+allowagentforwarding no
+allowusers azureuser
+>> servicios
+   deshabilitado: ModemManager
+   deshabilitado: udisks2
+   deshabilitado: fwupd
+   deshabilitado: fwupd-refresh.timer
+   deshabilitado: multipathd
+   deshabilitado: multipathd.socket
+>> Listo: vm-dns [dns]
