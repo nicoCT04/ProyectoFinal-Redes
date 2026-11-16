@@ -4,7 +4,7 @@
 
 ## Qué se implementó
 
-1. **Hardening** de todas las VMs (5 aplicadas; vm-dns queda lista en el script para cuando exista): firewall del host con **ufw** (default deny), SSH endurecido y servicios innecesarios apagados.
+1. **Hardening** de las 6 VMs: firewall del host con **ufw** (default deny), SSH endurecido y servicios innecesarios apagados.
 2. **Pruebas de bloqueo** entre subredes y desde internet (matriz "quién llega a quién"), con `ping`, `nc`, `curl` y `nmap`.
 3. **Diagrama de red actualizado** con la DMZ, los NSG, el DNS, los dos servidores web y los flujos permitidos y bloqueados.
 4. VMs de prueba **vm-ventas-01** (10.10.0.68) y **vm-visitas-01** (10.10.0.4), sin IP pública, para las pruebas desde cada subred.
@@ -44,7 +44,7 @@ Todas: `default deny incoming`, `default allow outgoing`, `logging low`.
 | VM | Rol | Entrada permitida | Por qué |
 |---|---|---|---|
 | vm-ti-01 | Jump host | 22/tcp | Es la entrada de los administradores. El origen ya lo limita el NSG (`Allow-SSH-Admin`) |
-| vm-dns | DNS | 22/tcp desde TI · 53 udp/tcp desde Ventas, TI y Data Center | Solo las redes que usan el DNS interno. Visitas y DMZ usan el DNS de Azure. Se aplica con `bash 08_hardening.sh aplicar vm-dns` cuando la VM exista |
+| vm-dns | DNS | 22/tcp desde TI · 53 udp/tcp desde Ventas, TI y Data Center | Solo las redes que usan el DNS interno. Visitas y DMZ usan el DNS de Azure (168.63.129.16, configurado en su NIC) |
 | vm-intranet | Intranet | 22/tcp desde TI · 80/tcp desde Ventas, TI y Data Center | Igual a la ACL de nginx (`allow`/`deny`) y al NSG |
 | vm-web-dmz | Web pública | 22/tcp desde TI · 80/tcp y 443/tcp desde cualquiera | 443 es el sitio. 80 redirige a HTTPS (301) y lo usa Let's Encrypt para renovar el certificado (reto HTTP-01) |
 | vm-ventas-01 · vm-visitas-01 | Clientes | 22/tcp desde TI | No ofrecen ningún servicio |
@@ -84,11 +84,12 @@ Se dejaron `ssh`, `chrony` (hora), `systemd-resolved` (DNS local, solo en 127.0.
 
 ### Antes y después
 
-En las 5 VMs ufw estaba **inactivo** y el único servicio expuesto fuera de loopback era el del rol (22, 53, 80 o 443). Después del hardening ufw está activo con *default deny* y cada puerto solo acepta las subredes que lo usan. `ss -tulpn` sigue mostrando los mismos puertos en escucha: ufw no apaga los servicios, decide **quién** puede llegar a ellos.
+En las 6 VMs ufw estaba **inactivo** y el único servicio expuesto fuera de loopback era el del rol (22, 53, 80 o 443). Después del hardening ufw está activo con *default deny* y cada puerto solo acepta las subredes que lo usan. `ss -tulpn` sigue mostrando los mismos puertos en escucha: ufw no apaga los servicios, decide **quién** puede llegar a ellos.
 
 | VM | Puertos en escucha (fuera de loopback) | ufw antes | ufw después |
 |---|---|---|---|
 | vm-ti-01 | 22 | inactive | 22 |
+| vm-dns | 22, 53 udp/tcp (solo 10.10.0.132) | inactive | 22 desde TI; 53 desde Ventas, TI y DC |
 | vm-intranet | 22, 80 (solo 10.10.0.133) | inactive | 22 desde TI; 80 desde Ventas, TI y DC |
 | vm-web-dmz | 22, 80, 443 | inactive | 22 desde TI; 80 y 443 desde cualquiera |
 | vm-ventas-01 | 22 | inactive | 22 desde TI |
@@ -114,12 +115,15 @@ TI es la única subred que el NSG deja llegar a todos los puertos, así que desd
 
 ```bash
 sudo nmap -Pn -sS -p- --min-rate 2000 10.10.0.4 10.10.0.68 10.10.0.133 10.10.0.148
+sudo nmap -Pn -sS -p- --min-rate 2000 -T4 10.10.0.132   # vm-dns, cuando estuvo lista
+sudo nmap -Pn -sU -p 53,123,161 10.10.0.132
 ```
 
 | Host | open | El resto |
 |---|---|---|
 | vm-visitas-01 (10.10.0.4) | 22 | 65 534 *filtered* |
 | vm-ventas-01 (10.10.0.68) | 22 | 65 534 *filtered* |
+| vm-dns (10.10.0.132) | 22, 53/tcp y 53/udp | 65 533 TCP *filtered*; 123 y 161 UDP *open\|filtered* (sin respuesta) |
 | vm-intranet (10.10.0.133) | 22, 80 | 65 533 *filtered* |
 | vm-web-dmz (10.10.0.148) | 22, 80, 443 | 65 532 *filtered* |
 
@@ -127,14 +131,14 @@ sudo nmap -Pn -sS -p- --min-rate 2000 10.10.0.4 10.10.0.68 10.10.0.133 10.10.0.1
 
 ### Matriz de conectividad
 
-Con las 5 VMs encendidas al mismo tiempo. TCP con `nc -zv -w 3 IP PUERTO` (*succeeded* o *timed out*), ICMP con `ping -c 2 -W 2` e internet con `curl -sI https://www.google.com`.
+Con las 6 VMs encendidas al mismo tiempo. TCP con `nc -zv -w 3 IP PUERTO` (*succeeded* o *timed out*), ICMP con `ping -c 2 -W 2` e internet con `curl -sI https://www.google.com`.
 
 | Desde \ Hacia | TI (ping / 22) | Ventas (ping) | DNS :53 | Intranet :80 | DMZ :80/443 (IP privada) | Internet |
 |---|---|---|---|---|---|---|
-| **Visitas** (10.10.0.4) | ❌ / ❌ | ❌ | ⏳ ¹ | ❌ | ❌ / ❌ | ✅ |
-| **Ventas** (10.10.0.68) | ❌ / ❌ | — | ⏳ ¹ | ✅ | ❌ | ✅ |
-| **TI** (10.10.0.100) | — | ✅ | ⏳ ¹ | ✅ | ✅ / ✅ | ✅ |
-| **DMZ** (10.10.0.148) | ❌ | ❌ | ⏳ ¹ | ❌ | — | ✅ |
+| **Visitas** (10.10.0.4) | ❌ / ❌ | ❌ | ❌ | ❌ | ❌ / ❌ | ✅ |
+| **Ventas** (10.10.0.68) | ❌ / ❌ | — | ✅ | ✅ | ❌ | ✅ |
+| **TI** (10.10.0.100) | — | ✅ | ✅ | ✅ | ✅ / ✅ | ✅ |
+| **DMZ** (10.10.0.148) | ❌ | ❌ | ❌ | ❌ | — | ✅ |
 
 Coincide con el comportamiento que pide el enunciado:
 
@@ -143,7 +147,7 @@ Coincide con el comportamiento que pide el enunciado:
 - La **intranet** responde a Ventas y TI, no a Visitas ni a la DMZ (`nsg-datacenter` → `Allow-Web-Intranet` 130 y `Deny-VNet` 4000), y no existe desde internet porque no tiene IP pública.
 - La **DMZ** no inicia conexiones hacia la red interna (`nsg-dmz` → `Deny-DMZ-hacia-Internas`, salida, 4000).
 
-¹ Pendiente de `vm-dns` (Daniela). Se corre con los mismos comandos cuando la VM exista: `nc -zv -w 3 10.10.0.132 53` y `nslookup rrhh.farmaruta.local 10.10.0.132`. Esperado: ✅ desde Ventas y TI, ❌ (timeout) desde Visitas y DMZ.
+- El **DNS interno** responde a Ventas, TI y al Data Center (vm-intranet también resuelve), y no a Visitas ni a la DMZ (`nsg-datacenter` → `Allow-DNS-Interno` 120 y `Deny-VNet` 4000; ufw de vm-dns igual). La columna DNS se probó con `nc -zv -w 3 10.10.0.132 53` y `nslookup rrhh.farmaruta.local 10.10.0.132` desde cada subred, después del hardening de vm-dns (`config/fase2/pruebas/dns_desde_cada_subred.txt`, captura `28_dns_desde_cada_subred.png`).
 
 También se probó el sentido contrario hacia Visitas: TI llega (ping y 22) y ni Ventas ni la DMZ llegan. En la primera corrida Ventas sí llegaba con ping; se explica y se corrige en *Hallazgo: tráfico interno hacia Visitas*.
 
@@ -199,7 +203,7 @@ Revisando las restricciones con `az vm list-skus`, los tamaños de 1 vCPU solo e
 - **vm-ventas-01 como Spot** (`--priority Spot --eviction-policy Deallocate`): usa la cuota *Low-priority*, separada de la regional. Si Azure necesita la capacidad la puede desalojar, lo cual no importa en un cliente de prueba.
 - **vm-visitas-01 en la zona 3**: en la zona 2 no había capacidad de `B2ats_v2` en ese momento (`ZonalAllocationFailed`). La VNet y las subredes son regionales, así que la zona no cambia nada del diseño de red.
 
-Resultado: las 6 VMs caben encendidas al mismo tiempo y queda exactamente 1 vCPU (`B1s`, zona 2) para `vm-dns`. `00_variables.sh` y `03_vms.sh` se actualizaron con estos tamaños y zonas.
+Resultado: las 6 VMs caben encendidas al mismo tiempo; con `vm-dns` creada como `B1s` en la zona 2 la cuota queda en 6/6 regional, 4/4 BS y 2/3 Spot. `00_variables.sh` y `03_vms.sh` se actualizaron con estos tamaños y zonas.
 
 ### Las VMs de prueba no salían a internet
 
@@ -252,6 +256,27 @@ az network nsg rule create -g rg-farmaruta --nsg-name nsg-visitas -n Deny-VNet -
 
 Ahora Visitas queda aislada en los dos sentidos: el NSG es la primera barrera y ufw queda como respaldo. Evidencia en `config/fase2/pruebas/hallazgo_ventas_hacia_visitas.txt` (antes), `config/fase2/pruebas/correccion_entrada_visitas.txt` (después) y capturas `23_hallazgo_ventas_hacia_visitas.png` y `24_correccion_entrada_visitas.png`.
 
+## Validación final del proyecto completo
+
+Al terminar todas las partes del grupo (DNS de Daniela, intranet de Andrés, red, NSG y DMZ de Nicolás, y esta sección), se hizo una validación de punta a punta con las 6 VMs encendidas (`config/fase2/pruebas/validacion_final.txt`):
+
+| Qué se validó | Resultado |
+|---|---|
+| Inventario: 6 VMs encendidas, tamaños y zonas | ✅ vm-dns, vm-intranet, vm-ti-01 y vm-web-dmz en `B1s`; vm-ventas-01 (Spot) y vm-visitas-01 en `B2ats_v2` |
+| Cuota de vCPU en Mexico Central | ✅ 6/6 regional, 4/4 familia BS |
+| DNS de la VNet por DHCP | ✅ `10.10.0.132`; Visitas y DMZ con `168.63.129.16` en su NIC |
+| Servicios: `named` en vm-dns, `nginx` en vm-intranet y vm-web-dmz, `ssh` en todas | ✅ activos |
+| ufw en las 6 VMs | ✅ `Status: active` |
+| Ventas, TI y vm-intranet resuelven `rrhh.farmaruta.local` con el resolver del sistema (`resolvectl`) | ✅ `10.10.0.133` |
+| Ventas, TI y vm-intranet abren `http://rrhh.farmaruta.local` | ✅ 200 |
+| Visitas: no resuelve `.local`, no llega a la intranet; sí a la web pública e internet | ✅ falla / 000 / 200 / 200 |
+| DMZ: no llega a la intranet; sí a internet | ✅ 000 / 200 |
+| Web pública desde internet: HTTP → HTTPS, HTTPS, certificado | ✅ 301, 200, Let's Encrypt vigente hasta feb 2027 |
+| SSH a la IP pública de la web | ✅ timeout (cerrado) |
+| SSH al jump host con contraseña | ✅ `Permission denied (publickey)` |
+
+Todo coincide con el comportamiento esperado del enunciado. Capturas `29_validacion_final_interna.png` y `30_validacion_final_internet_azure.png`.
+
 ## Archivos de configuración
 
 | Archivo | Qué contiene |
@@ -260,7 +285,7 @@ Ahora Visitas queda aislada en los dos sentidos: el NSG es la primera barrera y 
 | `config/fase2/hardening/sshd_hardening.conf` | Configuración de SSH (`/etc/ssh/sshd_config.d/10-farmaruta-hardening.conf`) |
 | `config/fase2/hardening/<vm>/` | Antes, aplicación y después de cada VM |
 | `config/fase2/08_hardening.sh` | Lo mismo desde Cloud Shell con `az vm run-command`: `aplicar`, `verificar` y `desactivar` (emergencia, si ufw dejara a alguien afuera) |
-| `config/fase2/pruebas/` | Salidas de nmap, la matriz desde cada subred, la prueba de defensa en profundidad, las pruebas desde internet y las reglas de los NSG |
+| `config/fase2/pruebas/` | Salidas de nmap, la matriz desde cada subred, la columna DNS, la prueba de defensa en profundidad, las pruebas desde internet, la validación final y las reglas de los NSG |
 | `config/fase2/diagrama/` | Diagrama `.drawio` y `.png` |
 
 ## Capturas (`capturas/fase2/seguridad/`)
@@ -278,14 +303,19 @@ Ahora Visitas queda aislada en los dos sentidos: el NSG es la primera barrera y 
 | 22 | `pruebas_desde_internet` | 301 → HTTPS, 22 cerrado en la DMZ, SSH sin contraseña ni root |
 | 23 | `hallazgo_ventas_hacia_visitas` | Ping de Ventas a Visitas pasa por `AllowVnetInBound`; el TCP lo bloquea ufw |
 | 24 | `correccion_entrada_visitas` | Con las reglas de entrada de `nsg-visitas`, Ventas ya no llega; TI e internet siguen funcionando |
+| 25–27 | `vm-dns_antes` / `_hardening` / `_despues` | 53 udp/tcp desde Ventas, TI y DC; BIND9 sigue en 10.10.0.132 |
+| 28 | `dns_desde_cada_subred` | Columna DNS de la matriz y nmap de vm-dns |
+| 29 | `validacion_final_interna` | Servicios, ufw, resolución por nombre e intranet desde cada subred |
+| 30 | `validacion_final_internet_azure` | Web pública, SSH desde internet, inventario de VMs, cuota y DNS de la VNet |
 
 ## Tiempo de implementación
 
 | Tarea | Tiempo |
 |---|---|
 | VMs de prueba y cuota: análisis, Spot, cambio a B1s de los servidores, salida a internet | 1.5 h |
-| Hardening: script, ufw, SSH y servicios en 5 VMs, antes/después | 1.5 h |
+| Hardening: script, ufw, SSH y servicios en 6 VMs, antes/después | 1.5 h |
 | Pruebas: nmap, matriz desde 4 subredes, desde internet, defensa en profundidad, corrección de `nsg-visitas` | 2 h |
 | Diagrama de red actualizado | 1 h |
+| Validación final del proyecto completo | 0.5 h |
 | Sección del reporte y capturas | 1 h |
-| **Total** | **7 h** |
+| **Total** | **7.5 h** |
