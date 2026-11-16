@@ -1,0 +1,15 @@
+# vm-web-dmz: nginx valido y puertos escuchando
+$ sudo nginx -t
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+$ sudo ss -tlnp
+State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess                                                                            
+LISTEN 0      511          0.0.0.0:80        0.0.0.0:*    users:(("nginx",pid=3145,fd=5),("nginx",pid=3144,fd=5),("nginx",pid=2416,fd=5))   
+LISTEN 0      4096      127.0.0.54:53        0.0.0.0:*    users:(("systemd-resolve",pid=472,fd=17))                                         
+LISTEN 0      4096   127.0.0.53%lo:53        0.0.0.0:*    users:(("systemd-resolve",pid=472,fd=15))                                         
+LISTEN 0      4096         0.0.0.0:22        0.0.0.0:*    users:(("sshd",pid=1471,fd=3),("systemd",pid=1,fd=163))                           
+LISTEN 0      511          0.0.0.0:443       0.0.0.0:*    users:(("nginx",pid=3145,fd=14),("nginx",pid=3144,fd=14),("nginx",pid=2416,fd=14))
+LISTEN 0      511             [::]:80           [::]:*    users:(("nginx",pid=3145,fd=6),("nginx",pid=3144,fd=6),("nginx",pid=2416,fd=6))   
+LISTEN 0      4096            [::]:22           [::]:*    users:(("sshd",pid=1471,fd=4),("systemd",pid=1,fd=164))                           
+LISTEN 0      511             [::]:443          [::]:*    users:(("nginx",pid=3145,fd=13),("nginx",pid=3144,fd=13),("nginx",pid=2416,fd=13))

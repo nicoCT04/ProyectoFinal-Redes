@@ -1,0 +1,13 @@
+# Desde vm-web-dmz (10.10.0.148): la DMZ NO llega a la red interna, SI a internet
+$ curl -m 5 http://10.10.0.133        # intranet RRHH
+exit 28 (28 = timeout)
+$ nc -zv -w 3 10.10.0.132 53          # DNS interno
+nc: connect to 10.10.0.132 port 53 (tcp) timed out: Operation now in progress
+$ ping -c 2 -W 2 10.10.0.100          # TI
+2 packets transmitted, 0 received, 100% packet loss, time 1044ms
+
+$ ping -c 2 -W 2 10.10.0.68           # Ventas
+2 packets transmitted, 0 received, 100% packet loss, time 1006ms
+
+$ curl -sI https://www.google.com | head -1   # internet
+HTTP/2 200 

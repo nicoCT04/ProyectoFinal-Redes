@@ -1,0 +1,40 @@
+# Desde internet (compu del admin): HTTP redirige con 301 a HTTPS
+$ curl -I http://farmaruta-ventas.mexicocentral.cloudapp.azure.com
+HTTP/1.1 301 Moved Permanently
+Server: nginx
+Date: Fri, 13 Nov 2026 23:46:19 GMT
+Content-Type: text/html
+Content-Length: 162
+Connection: keep-alive
+Location: https://farmaruta-ventas.mexicocentral.cloudapp.azure.com/
+
+$ curl -I https://farmaruta-ventas.mexicocentral.cloudapp.azure.com
+HTTP/1.1 200 OK
+Server: nginx
+Date: Fri, 13 Nov 2026 23:46:19 GMT
+Content-Type: text/html
+Content-Length: 6160
+Last-Modified: Fri, 13 Nov 2026 23:45:50 GMT
+Connection: keep-alive
+ETag: "6af7a12e-1810"
+Accept-Ranges: bytes
+
+# Certificado emitido por Let's Encrypt
+$ openssl s_client -connect farmaruta-ventas.mexicocentral.cloudapp.azure.com:443 -servername farmaruta-ventas.mexicocentral.cloudapp.azure.com | openssl x509 -noout -subject -issuer -dates
+subject=CN=farmaruta-ventas.mexicocentral.cloudapp.azure.com
+issuer=C=US, O=Let's Encrypt, CN=YE1
+notBefore=Nov 13 22:46:03 2026 GMT
+notAfter=Feb 11 22:46:02 2027 GMT
+
+# En vm-web-dmz: certificado y renovacion automatica
+$ sudo certbot certificates
+  Certificate Name: farmaruta-ventas.mexicocentral.cloudapp.azure.com
+    Serial Number: 5135b2b41d6416179eb34e61c34154f2cf1
+    Key Type: ECDSA
+    Domains: farmaruta-ventas.mexicocentral.cloudapp.azure.com
+    Expiry Date: 2027-02-11 22:46:02+00:00 (VALID: 89 days)
+    Certificate Path: /etc/letsencrypt/live/farmaruta-ventas.mexicocentral.cloudapp.azure.com/fullchain.pem
+    Private Key Path: /etc/letsencrypt/live/farmaruta-ventas.mexicocentral.cloudapp.azure.com/privkey.pem
+$ systemctl list-timers certbot.timer
+NEXT                         LEFT LAST PASSED UNIT          ACTIVATES
+Sat 2026-11-14 00:10:34 UTC 24min -         - certbot.timer certbot.service
