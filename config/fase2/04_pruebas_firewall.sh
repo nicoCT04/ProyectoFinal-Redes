@@ -58,10 +58,10 @@ done
 
 cat <<'EOF'
 
-Resultado esperado (antes del hardening con ufw):
+Resultado esperado (NSG finales, con entrada cerrada en nsg-visitas, y ufw activo):
   Origen    TI     Ventas  Visitas  DNS:53  Intranet:80  DMZ:80  Internet
   Visitas   BLOQ   BLOQ    OK       BLOQ    BLOQ         BLOQ    OK
-  Ventas    BLOQ   OK      OK       ABIERTO ABIERTO      BLOQ    OK
+  Ventas    BLOQ   OK      BLOQ     ABIERTO ABIERTO      BLOQ    OK
   TI        OK     OK      OK       ABIERTO ABIERTO      ABIERTO OK
   DMZ       BLOQ   BLOQ    BLOQ     BLOQ    BLOQ         -       OK
 EOF
