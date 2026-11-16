@@ -1,0 +1,78 @@
+azureuser@vm-ti-01:~$ for s in named nginx ssh; do systemctl is-active --quiet $s 2>/dev/null && echo "$s: active"; done; sudo ufw status | head -1
+ssh: active
+Status: active
+azureuser@vm-dns:~$ for s in named nginx ssh; do systemctl is-active --quiet $s 2>/dev/null && echo "$s: active"; done; sudo ufw status | head -1
+named: active
+ssh: active
+Status: active
+azureuser@vm-intranet:~$ for s in named nginx ssh; do systemctl is-active --quiet $s 2>/dev/null && echo "$s: active"; done; sudo ufw status | head -1
+nginx: active
+ssh: active
+Status: active
+azureuser@vm-web-dmz:~$ for s in named nginx ssh; do systemctl is-active --quiet $s 2>/dev/null && echo "$s: active"; done; sudo ufw status | head -1
+nginx: active
+ssh: active
+Status: active
+azureuser@vm-ventas-01:~$ for s in named nginx ssh; do systemctl is-active --quiet $s 2>/dev/null && echo "$s: active"; done; sudo ufw status | head -1
+ssh: active
+Status: active
+azureuser@vm-visitas-01:~$ for s in named nginx ssh; do systemctl is-active --quiet $s 2>/dev/null && echo "$s: active"; done; sudo ufw status | head -1
+ssh: active
+Status: active
+azureuser@vm-ventas-01:~$ resolvectl query rrhh.farmaruta.local | head -1
+rrhh.farmaruta.local: 10.10.0.133                           -- link: eth0
+azureuser@vm-ventas-01:~$ curl -s -o /dev/null -m 5 -w '%{http_code}\n' http://rrhh.farmaruta.local
+200
+azureuser@vm-ventas-01:~$ curl -s -o /dev/null -m 5 -w '%{http_code}\n' https://www.google.com
+200
+azureuser@vm-ti-01:~$ resolvectl query rrhh.farmaruta.local | head -1
+rrhh.farmaruta.local: 10.10.0.133                           -- link: eth0
+azureuser@vm-ti-01:~$ curl -s -o /dev/null -m 5 -w '%{http_code}\n' http://rrhh.farmaruta.local
+200
+azureuser@vm-ti-01:~$ curl -s -o /dev/null -m 5 -w '%{http_code}\n' https://www.google.com
+200
+azureuser@vm-intranet:~$ resolvectl query rrhh.farmaruta.local | head -1
+rrhh.farmaruta.local: 10.10.0.133                           -- link: eth0
+azureuser@vm-intranet:~$ curl -s -o /dev/null -m 5 -w '%{http_code}\n' http://rrhh.farmaruta.local
+200
+azureuser@vm-intranet:~$ curl -s -o /dev/null -m 5 -w '%{http_code}\n' https://www.google.com
+200
+azureuser@vm-visitas-01:~$ resolvectl query rrhh.farmaruta.local 2>&1 | head -1
+rrhh.farmaruta.local: resolve call failed: No appropriate name servers or networks for name found
+azureuser@vm-visitas-01:~$ curl -s -o /dev/null -m 5 -w '%{http_code}\n' http://10.10.0.133 || true
+000
+azureuser@vm-visitas-01:~$ curl -s -o /dev/null -m 5 -w '%{http_code}\n' https://farmaruta-ventas.mexicocentral.cloudapp.azure.com
+200
+azureuser@vm-visitas-01:~$ curl -s -o /dev/null -m 5 -w '%{http_code}\n' https://www.google.com
+200
+azureuser@vm-web-dmz:~$ curl -s -o /dev/null -m 5 -w '%{http_code}\n' http://10.10.0.133 || true
+000
+azureuser@vm-web-dmz:~$ curl -s -o /dev/null -m 5 -w '%{http_code}\n' https://www.google.com
+200
+lfmendoza@LFMENDOZA-YOGA:~$ curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' http://farmaruta-ventas.mexicocentral.cloudapp.azure.com
+301 https://farmaruta-ventas.mexicocentral.cloudapp.azure.com/
+lfmendoza@LFMENDOZA-YOGA:~$ curl -s -o /dev/null -w '%{http_code}\n' https://farmaruta-ventas.mexicocentral.cloudapp.azure.com
+200
+lfmendoza@LFMENDOZA-YOGA:~$ echo | openssl s_client -connect farmaruta-ventas.mexicocentral.cloudapp.azure.com:443 -servername farmaruta-ventas.mexicocentral.cloudapp.azure.com 2>/dev/null | openssl x509 -noout -issuer -enddate
+issuer=C = US, O = Let's Encrypt, CN = YE1
+notAfter=Feb 11 22:46:02 2027 GMT
+lfmendoza@LFMENDOZA-YOGA:~$ nc -zv -w 3 158.23.162.4 22
+nc: connect to 158.23.162.4 port 22 (tcp) timed out: Operation now in progress
+lfmendoza@LFMENDOZA-YOGA:~$ ssh -o BatchMode=yes -o PreferredAuthentications=password -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR azureuser@158.23.161.215
+azureuser@158.23.161.215: Permission denied (publickey).
+lfmendoza@LFMENDOZA-YOGA:~$ az vm list -g rg-farmaruta -d --query "sort_by([],&name)[].{VM:name,Tamano:hardwareProfile.vmSize,Zona:zones[0],Estado:powerState,IP:privateIps}" -o table
+VM             Tamano             Zona    Estado      IP
+-------------  -----------------  ------  ----------  -----------
+vm-dns         Standard_B1s       2       VM running  10.10.0.132
+vm-intranet    Standard_B1s       2       VM running  10.10.0.133
+vm-ti-01       Standard_B1s       2       VM running  10.10.0.100
+vm-ventas-01   Standard_B2ats_v2  2       VM running  10.10.0.68
+vm-visitas-01  Standard_B2ats_v2  3       VM running  10.10.0.4
+vm-web-dmz     Standard_B1s       2       VM running  10.10.0.148
+lfmendoza@LFMENDOZA-YOGA:~$ az vm list-usage -l mexicocentral --query "[?contains(name.value,'cores')||name.value=='standardBSFamily'].{Cuota:localName,Uso:currentValue,Limite:limit}" -o table
+Cuota                     Uso    Limite
+------------------------  -----  --------
+Standard BS Family vCPUs  4      4
+Total Regional vCPUs      6      6
+lfmendoza@LFMENDOZA-YOGA:~$ az network vnet show -g rg-farmaruta -n vnet-farmaruta --query dhcpOptions.dnsServers -o tsv
+10.10.0.132

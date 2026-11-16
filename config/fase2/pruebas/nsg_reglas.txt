@@ -9,11 +9,11 @@ Prioridad    Nombre                  Dir       Accion    Proto    Origen        
 --- nsg-ventas
 
 --- nsg-ti
-Prioridad    Nombre               Dir      Accion    Proto    Origen                                         Destino      Puertos
------------  -------------------  -------  --------  -------  ---------------------------------------------  -----------  ---------
-100          Allow-Propia-Subred  Inbound  Allow     *        10.10.0.96/27                                  *            *
-105          Allow-SSH-Admin      Inbound  Allow     TCP      181.174.x.x,190.14.x.x,190.106.x.x  10.10.0.100  22
-4000         Deny-VNet-hacia-TI   Inbound  Deny      *        VirtualNetwork                                 *            *
+Prioridad    Nombre               Dir      Accion    Proto    Origen                                                         Destino      Puertos
+-----------  -------------------  -------  --------  -------  -------------------------------------------------------------  -----------  ---------
+100          Allow-Propia-Subred  Inbound  Allow     *        10.10.0.96/27                                                  *            *
+105          Allow-SSH-Admin      Inbound  Allow     TCP      181.174.x.x,190.14.x.x,190.106.x.x,190.149.x.x/24  10.10.0.100  22
+4000         Deny-VNet-hacia-TI   Inbound  Deny      *        VirtualNetwork                                                 *            *
 --- nsg-datacenter
 Prioridad    Nombre               Dir      Accion    Proto    Origen          Destino      Puertos
 -----------  -------------------  -------  --------  -------  --------------  -----------  ---------

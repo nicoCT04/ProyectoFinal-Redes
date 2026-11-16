@@ -1,0 +1,60 @@
+azureuser@vm-visitas-01:~$ nc -zv -w 3 10.10.0.132 53
+nc: connect to 10.10.0.132 port 53 (tcp) timed out: Operation now in progress
+azureuser@vm-visitas-01:~$ nslookup -timeout=3 -retry=1 rrhh.farmaruta.local 10.10.0.132
+;; communications error to 10.10.0.132#53: timed out
+;; no servers could be reached
+
+azureuser@vm-ventas-01:~$ nc -zv -w 3 10.10.0.132 53
+Connection to 10.10.0.132 53 port [tcp/domain] succeeded!
+azureuser@vm-ventas-01:~$ nslookup -timeout=3 -retry=1 rrhh.farmaruta.local 10.10.0.132
+Server:		10.10.0.132
+Address:	10.10.0.132#53
+
+Name:	rrhh.farmaruta.local
+Address: 10.10.0.133
+
+azureuser@vm-ti-01:~$ nc -zv -w 3 10.10.0.132 53
+Connection to 10.10.0.132 53 port [tcp/domain] succeeded!
+azureuser@vm-ti-01:~$ nslookup -timeout=3 -retry=1 rrhh.farmaruta.local 10.10.0.132
+Server:		10.10.0.132
+Address:	10.10.0.132#53
+
+Name:	rrhh.farmaruta.local
+Address: 10.10.0.133
+
+azureuser@vm-web-dmz:~$ nc -zv -w 3 10.10.0.132 53
+nc: connect to 10.10.0.132 port 53 (tcp) timed out: Operation now in progress
+azureuser@vm-web-dmz:~$ nslookup -timeout=3 -retry=1 rrhh.farmaruta.local 10.10.0.132
+;; communications error to 10.10.0.132#53: timed out
+;; no servers could be reached
+
+azureuser@vm-intranet:~$ nc -zv -w 3 10.10.0.132 53
+Connection to 10.10.0.132 53 port [tcp/domain] succeeded!
+azureuser@vm-intranet:~$ nslookup -timeout=3 -retry=1 rrhh.farmaruta.local 10.10.0.132
+Server:		10.10.0.132
+Address:	10.10.0.132#53
+
+Name:	rrhh.farmaruta.local
+Address: 10.10.0.133
+
+azureuser@vm-ti-01:~$ sudo nmap -Pn -sS -p- --min-rate 2000 -T4 10.10.0.132
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2026-11-16 02:04 UTC
+Nmap scan report for ns1.farmaruta.local (10.10.0.132)
+Host is up (0.0010s latency).
+Not shown: 65533 filtered tcp ports (no-response)
+PORT   STATE SERVICE
+22/tcp open  ssh
+53/tcp open  domain
+
+Nmap done: 1 IP address (1 host up) scanned in 65.74 seconds
+azureuser@vm-ti-01:~$ sudo nmap -Pn -sU -p 53,123,161 10.10.0.132
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2026-11-16 02:05 UTC
+Nmap scan report for ns1.farmaruta.local (10.10.0.132)
+Host is up (0.0012s latency).
+
+PORT    STATE         SERVICE
+53/udp  open          domain
+123/udp open|filtered ntp
+161/udp open|filtered snmp
+
+Nmap done: 1 IP address (1 host up) scanned in 1.34 seconds
