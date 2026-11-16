@@ -4,18 +4,16 @@ azureuser@vm-ventas-01:~$ ping -c 2 -W 2 10.10.0.100
 PING 10.10.0.100 (10.10.0.100) 56(84) bytes of data.
 
 --- 10.10.0.100 ping statistics ---
-2 packets transmitted, 0 received, 100% packet loss, time 1024ms
+2 packets transmitted, 0 received, 100% packet loss, time 1003ms
 
 azureuser@vm-ventas-01:~$ nc -zv -w 3 10.10.0.100 22
 nc: connect to 10.10.0.100 port 22 (tcp) timed out: Operation now in progress
 azureuser@vm-ventas-01:~$ ping -c 2 -W 2 10.10.0.4
 PING 10.10.0.4 (10.10.0.4) 56(84) bytes of data.
-64 bytes from 10.10.0.4: icmp_seq=1 ttl=64 time=0.868 ms
-64 bytes from 10.10.0.4: icmp_seq=2 ttl=64 time=1.01 ms
 
 --- 10.10.0.4 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time 1060ms
-rtt min/avg/max/mdev = 0.868/0.939/1.011/0.071 ms
+2 packets transmitted, 0 received, 100% packet loss, time 1038ms
+
 azureuser@vm-ventas-01:~$ nc -zv -w 3 10.10.0.133 80
 Connection to 10.10.0.133 80 port [tcp/http] succeeded!
 azureuser@vm-ventas-01:~$ curl -s -m 5 -H 'Host: rrhh.farmaruta.local' http://10.10.0.133 | grep -o '<title>.*</title>'
